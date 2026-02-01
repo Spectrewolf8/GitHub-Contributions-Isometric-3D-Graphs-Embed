@@ -1,5 +1,14 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["fonts/**", "src/**"]
+      }
+    }
+  ],
   "routes": [
     {
       "src": "/(.*)",
@@ -7,12 +16,8 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "NODE_OPTIONS": "--experimental-vm-modules"
   },
-  "functions": {
-    "server.js": {
-      "runtime": "nodejs20.x",
-      "maxDuration": 30
-    }
-  }
+  "installCommand": "npm install --legacy-peer-deps"
 }
