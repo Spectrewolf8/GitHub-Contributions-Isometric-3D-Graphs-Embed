@@ -3,60 +3,84 @@
  * Generates isometric 3D visualization from contribution data
  */
 
-import { createCanvas } from 'canvas'
-import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import { dirname, join } from 'node:path'
-import { JSDOM } from 'jsdom'
+import { createCanvas, registerFont } from "canvas";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+import { JSDOM } from "jsdom";
 import {
   calculateStreaks,
   datesDayDifference,
   precisionRound,
-  sameDay
-} from './utils.js'
+  sameDay,
+} from "./utils.js";
 
-// Create a browser-like environment for obelisk
-const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>')
-globalThis.window = dom.window
-globalThis.document = dom.window.document
-globalThis.Image = dom.window.Image
-globalThis.HTMLCanvasElement = dom.window.HTMLCanvasElement
+// Get directory paths
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const fontsDir = join(__dirname, "..", "fonts");
 
-// Patch canvas element creation to use node-canvas
-const originalCreateElement = globalThis.document.createElement.bind(globalThis.document)
-globalThis.document.createElement = function(tagName) {
-  if (tagName.toLowerCase() === 'canvas') {
-    const canvas = createCanvas(1, 1)
-    // Add setAttribute method that node-canvas doesn't have
-    canvas.setAttribute = function(attr, value) {
-      if (attr === 'width') this.width = Number.parseInt(value, 10)
-      else if (attr === 'height') this.height = Number.parseInt(value, 10)
-    }
-    // Add getAttribute method
-    canvas.getAttribute = function(attr) {
-      if (attr === 'width') return this.width
-      if (attr === 'height') return this.height
-      return null
-    }
-    return canvas
-  }
-  return originalCreateElement(tagName)
+// Register Segoe UI fonts from local fonts directory
+try {
+  registerFont(join(fontsDir, "Segoe UI.ttf"), {
+    family: "Segoe UI",
+    weight: "normal",
+  });
+  registerFont(join(fontsDir, "Segoe UI Bold.ttf"), {
+    family: "Segoe UI",
+    weight: "600",
+  });
+  registerFont(join(fontsDir, "Segoe UI Bold.ttf"), {
+    family: "Segoe UI",
+    weight: "bold",
+  });
+  console.log("✓ Registered Segoe UI fonts");
+} catch (e) {
+  console.warn("⚠ Could not register Segoe UI fonts:", e.message);
 }
 
+// Create a browser-like environment for obelisk
+const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>");
+globalThis.window = dom.window;
+globalThis.document = dom.window.document;
+globalThis.Image = dom.window.Image;
+globalThis.HTMLCanvasElement = dom.window.HTMLCanvasElement;
+
+// Patch canvas element creation to use node-canvas
+const originalCreateElement = globalThis.document.createElement.bind(
+  globalThis.document,
+);
+globalThis.document.createElement = function (tagName) {
+  if (tagName.toLowerCase() === "canvas") {
+    const canvas = createCanvas(1, 1);
+    // Add setAttribute method that node-canvas doesn't have
+    canvas.setAttribute = function (attr, value) {
+      if (attr === "width") this.width = Number.parseInt(value, 10);
+      else if (attr === "height") this.height = Number.parseInt(value, 10);
+    };
+    // Add getAttribute method
+    canvas.getAttribute = function (attr) {
+      if (attr === "width") return this.width;
+      if (attr === "height") return this.height;
+      return null;
+    };
+    return canvas;
+  }
+  return originalCreateElement(tagName);
+};
+
 // Load obelisk.js for isometric rendering
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const obeliskPath = join(__dirname, 'obelisk.min.js')
-const obeliskCode = readFileSync(obeliskPath, 'utf8')
+const obeliskPath = join(__dirname, "obelisk.min.js");
+const obeliskCode = readFileSync(obeliskPath, "utf8");
 
 // biome-ignore lint/security/noGlobalEval: Required for loading obelisk library
-eval(obeliskCode)
-const obelisk = globalThis.window.obelisk
+eval(obeliskCode);
+const obelisk = globalThis.window.obelisk;
 
-const dateFormat = new Intl.DateTimeFormat('en-US', {
-  month: 'short',
-  day: 'numeric',
-  timeZone: 'UTC'
-})
+const dateFormat = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
 
 /**
  * Render isometric contribution graph to canvas
@@ -73,68 +97,69 @@ export function renderIsometricChart(days, options = {}) {
     width = 1000,
     height = 600,
     cubeSize = 16,
-    maxHeight = 100
-  } = options
+    maxHeight = 100,
+  } = options;
 
   // Create canvas
-  const canvas = createCanvas(width, height)
-  const ctx = canvas.getContext('2d')
-  
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext("2d");
+
   // Clear canvas with transparent background
-  ctx.clearRect(0, 0, width, height)
+  ctx.clearRect(0, 0, width, height);
 
   // Calculate max count for scaling
-  const maxCount = Math.max(...days.map(d => d.count))
+  const maxCount = Math.max(...days.map((d) => d.count));
 
   // Group days by week
   const weeks = Object.values(
     days.reduce((acc, day) => {
-      const key = day.week
+      const key = day.week;
       if (!acc[key]) {
-        acc[key] = []
+        acc[key] = [];
       }
-      acc[key].push(day)
-      return acc
-    }, {})
-  )
+      acc[key].push(day);
+      return acc;
+    }, {}),
+  );
 
   // Setup obelisk
-  const point = new obelisk.Point(130, 90)
-  const pixelView = new obelisk.PixelView(canvas, point)
-  
-  const GH_OFFSET = 14
-  let transform = GH_OFFSET
+  const point = new obelisk.Point(130, 90);
+  const pixelView = new obelisk.PixelView(canvas, point);
+
+  const GH_OFFSET = 14;
+  let transform = GH_OFFSET;
 
   // Render each week
   for (const week of weeks) {
-    const x = transform / (GH_OFFSET + 1)
-    transform += GH_OFFSET
-    let offsetY = 0
+    const x = transform / (GH_OFFSET + 1);
+    transform += GH_OFFSET;
+    let offsetY = 0;
 
     // Render each day in the week
     for (const day of week) {
-      const y = offsetY / GH_OFFSET
-      offsetY += 13
-      
-      let cubeHeight = 3
+      const y = offsetY / GH_OFFSET;
+      offsetY += 13;
+
+      let cubeHeight = 3;
       if (maxCount > 0) {
-        cubeHeight += Number.parseInt(
-          (maxHeight / maxCount) * day.count,
-          10
-        )
+        cubeHeight += Number.parseInt((maxHeight / maxCount) * day.count, 10);
       }
 
-      const dimension = new obelisk.CubeDimension(cubeSize, cubeSize, cubeHeight)
+      const dimension = new obelisk.CubeDimension(
+        cubeSize,
+        cubeSize,
+        cubeHeight,
+      );
       const color = new obelisk.CubeColor().getByHorizontalColor(
-        Number.parseInt(day.color, 16)
-      )
-      const cube = new obelisk.Cube(dimension, color, false)
-      const p3d = new obelisk.Point3D(cubeSize * x, cubeSize * y, 0)
-      pixelView.renderObject(cube, p3d)
+        Number.parseInt(day.color, 16),
+      );
+      const cube = new obelisk.Cube(dimension, color, false);
+      const p3d = new obelisk.Point3D(cubeSize * x, cubeSize * y, 0);
+      pixelView.renderObject(cube, p3d);
     }
   }
 
-  return canvas
+  return canvas;
 }
 
 /**
@@ -149,77 +174,78 @@ export function calculateStats(days) {
       maxCount: 0,
       averageCount: 0,
       bestDay: null,
-      dateBest: 'No activity found',
+      dateBest: "No activity found",
       streakLongest: 0,
-      datesLongest: 'No longest streak',
+      datesLongest: "No longest streak",
       streakCurrent: 0,
-      datesCurrent: 'No current streak',
-      countTotal: '0',
-      datesTotal: '',
+      datesCurrent: "No current streak",
+      countTotal: "0",
+      datesTotal: "",
       weekTotal: 0,
-      weekCountTotal: '0',
-      weekDatesTotal: ''
-    }
+      weekCountTotal: "0",
+      weekDatesTotal: "",
+    };
   }
 
-  const firstDay = days[0].date
-  const lastDay = days.find((d) => sameDay(d.date, new Date()))?.date ?? days.at(-1).date
+  const firstDay = days[0].date;
+  const lastDay =
+    days.find((d) => sameDay(d.date, new Date()))?.date ?? days.at(-1).date;
 
   // Calculate streaks
-  const stats = calculateStreaks(days)
-  
+  const stats = calculateStreaks(days);
+
   // Calculate totals
-  const yearTotal = stats.yearTotal
-  const maxCount = stats.maxCount
-  const bestDay = stats.bestDay
+  const yearTotal = stats.yearTotal;
+  const maxCount = stats.maxCount;
+  const bestDay = stats.bestDay;
 
   // Format dates
-  const dateFirst = dateFormat.format(firstDay)
-  const dateLast = dateFormat.format(lastDay)
-  const datesTotal = `${dateFirst} → ${dateLast}`
+  const dateFirst = dateFormat.format(firstDay);
+  const dateLast = dateFormat.format(lastDay);
+  const datesTotal = `${dateFirst} → ${dateLast}`;
 
   // Average contributions per day
-  const dayDifference = datesDayDifference(firstDay, lastDay)
-  const averageCount = precisionRound(yearTotal / dayDifference, 2)
+  const dayDifference = datesDayDifference(firstDay, lastDay);
+  const averageCount = precisionRound(yearTotal / dayDifference, 2);
 
   // Best day
-  const dateBest = bestDay ? dateFormat.format(bestDay) : 'No activity found'
+  const dateBest = bestDay ? dateFormat.format(bestDay) : "No activity found";
 
   // Format streak dates
-  let datesLongest = 'No longest streak'
+  let datesLongest = "No longest streak";
   if (stats.streakLongest > 0) {
-    const longestStart = dateFormat.format(stats.longestStreakStart)
-    const longestEnd = dateFormat.format(stats.longestStreakEnd)
-    datesLongest = `${longestStart} → ${longestEnd}`
+    const longestStart = dateFormat.format(stats.longestStreakStart);
+    const longestEnd = dateFormat.format(stats.longestStreakEnd);
+    datesLongest = `${longestStart} → ${longestEnd}`;
   }
 
-  let datesCurrent = 'No current streak'
+  let datesCurrent = "No current streak";
   if (stats.streakCurrent > 0) {
-    const currentStart = dateFormat.format(stats.currentStreakStart)
-    const currentEnd = dateFormat.format(stats.currentStreakEnd)
-    datesCurrent = `${currentStart} → ${currentEnd}`
+    const currentStart = dateFormat.format(stats.currentStreakStart);
+    const currentEnd = dateFormat.format(stats.currentStreakEnd);
+    datesCurrent = `${currentStart} → ${currentEnd}`;
   }
 
   // Week total (last week)
   const weeks = Object.values(
     days.reduce((acc, day) => {
-      const key = day.week
+      const key = day.week;
       if (!acc[key]) {
-        acc[key] = []
+        acc[key] = [];
       }
-      acc[key].push(day)
-      return acc
-    }, {})
-  )
-  const currentWeekDays = weeks.at(-1) || []
-  let weekTotal = 0
+      acc[key].push(day);
+      return acc;
+    }, {}),
+  );
+  const currentWeekDays = weeks.at(-1) || [];
+  let weekTotal = 0;
   for (const d of currentWeekDays) {
-    weekTotal += d.count
+    weekTotal += d.count;
   }
-  
-  const weekStartDay = currentWeekDays[0]?.date
-  const weekDateFirst = weekStartDay ? dateFormat.format(weekStartDay) : ''
-  const weekDatesTotal = weekStartDay ? `${weekDateFirst} → ${dateLast}` : ''
+
+  const weekStartDay = currentWeekDays[0]?.date;
+  const weekDateFirst = weekStartDay ? dateFormat.format(weekStartDay) : "";
+  const weekDatesTotal = weekStartDay ? `${weekDateFirst} → ${dateLast}` : "";
 
   return {
     yearTotal,
@@ -234,8 +260,8 @@ export function calculateStats(days) {
     datesCurrent,
     weekTotal,
     weekCountTotal: weekTotal.toLocaleString(),
-    weekDatesTotal
-  }
+    weekDatesTotal,
+  };
 }
 
 /**
@@ -244,7 +270,7 @@ export function calculateStats(days) {
  * @returns {Buffer} PNG image buffer
  */
 export function exportToPNG(canvas) {
-  return canvas.toBuffer('image/png')
+  return canvas.toBuffer("image/png");
 }
 
 /**
@@ -255,17 +281,234 @@ export function exportToPNG(canvas) {
  * @returns {string} Data URL of the canvas
  */
 export function exportToDataURL(canvas) {
-  return canvas.toDataURL()
+  return canvas.toDataURL();
 }
 
 /**
- * Render contribution graph with stats overlay (future enhancement)
+ * Render contribution graph with stats overlay
  * @param {Array} days - Array of day objects
  * @param {Object} options - Rendering options
  * @returns {Canvas} Canvas with graph and stats
  */
 export function renderWithStats(days, options = {}) {
-  // For now, just render the chart
-  // In the future, this could overlay stats text on the image
-  return renderIsometricChart(days, options)
+  const canvas = renderIsometricChart(days, options);
+  const stats = calculateStats(days);
+
+  const ctx = canvas.getContext("2d");
+
+  // Draw contributions box (top right)
+  drawContributionsBox(ctx, stats, canvas.width - 390, 25);
+
+  // Draw streaks box (bottom left)
+  drawStreaksBox(ctx, stats, 25, canvas.height - 125);
+
+  return canvas;
+}
+
+/**
+ * Draw contributions statistics box
+ * @param {CanvasRenderingContext2D} ctx - Canvas context
+ * @param {Object} stats - Statistics object
+ * @param {number} x - X position
+ * @param {number} y - Y position
+ */
+function drawContributionsBox(ctx, stats, x, y) {
+  const boxWidth = 370;
+  const boxHeight = 90;
+  const titleHeight = 24;
+
+  // Title (outside, above the box)
+  ctx.fillStyle = "#74b9ff";
+  ctx.font = '16px "Segoe UI", sans-serif';
+  ctx.fillText("Contributions", x + 14, y + 16);
+
+  // Box starts below title
+  const boxY = y + titleHeight;
+
+  // Drop shadow
+  ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 3;
+
+  // Box background (transparent/semi-transparent)
+  ctx.fillStyle = "rgba(22, 27, 34, 0.6)";
+  ctx.beginPath();
+  ctx.roundRect(x, boxY, boxWidth, boxHeight, 8);
+  ctx.fill();
+
+  // Reset shadow
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+
+  // Border
+  ctx.strokeStyle = "rgba(48, 54, 61, 0.6)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Stats row
+  const itemY = boxY + 12;
+
+  // Total
+  drawFlexStatItem(
+    ctx,
+    stats.countTotal.toString(),
+    "Total",
+    stats.datesTotal,
+    x + 16,
+    itemY,
+  );
+
+  // This week
+  drawFlexStatItem(
+    ctx,
+    stats.weekCountTotal.toString(),
+    "This week",
+    stats.weekDatesTotal,
+    x + 130,
+    itemY,
+  );
+
+  // Best day
+  const bestDayDate = stats.dateBest.includes(" ")
+    ? stats.dateBest.split(" ").slice(0, 2).join(" ")
+    : stats.dateBest;
+  drawFlexStatItem(
+    ctx,
+    stats.maxCount.toString(),
+    "Best day",
+    bestDayDate,
+    x + 250,
+    itemY,
+  );
+
+  // Average (bottom right)
+  const avgY = boxY + boxHeight - 10;
+  ctx.fillStyle = "#7d8590";
+  ctx.font = '10px "Segoe UI", sans-serif';
+  const avgText = "Average:";
+  const avgNumText = stats.averageCount.toString();
+  const dayText = "/ day";
+
+  const dayWidth = ctx.measureText(dayText).width;
+  const numWidth = ctx.measureText(avgNumText).width;
+  const avgWidth = ctx.measureText(avgText).width;
+
+  const totalWidth = avgWidth + 4 + numWidth + 4 + dayWidth;
+  const startX = x + boxWidth - totalWidth - 14;
+
+  ctx.fillText(avgText, startX, avgY);
+
+  ctx.fillStyle = "#2ea043";
+  ctx.fillText(avgNumText, startX + avgWidth + 4, avgY);
+
+  ctx.fillStyle = "#7d8590";
+  ctx.fillText(dayText, startX + avgWidth + 4 + numWidth + 4, avgY);
+}
+
+/**
+ * Draw streaks statistics box
+ * @param {CanvasRenderingContext2D} ctx - Canvas context
+ * @param {Object} stats - Statistics object
+ * @param {number} x - X position
+ * @param {number} y - Y position
+ */
+function drawStreaksBox(ctx, stats, x, y) {
+  const boxWidth = 270;
+  const boxHeight = 80;
+  const titleHeight = 24;
+
+  // Title (outside, above the box)
+  ctx.fillStyle = "#74b9ff";
+  ctx.font = '16px "Segoe UI", sans-serif';
+  ctx.fillText("Streaks", x + 14, y + 16);
+
+  // Box starts below title
+  const boxY = y + titleHeight;
+
+  // Drop shadow
+  ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 3;
+
+  // Box background (transparent/semi-transparent)
+  ctx.fillStyle = "rgba(22, 27, 34, 0.6)";
+  ctx.beginPath();
+  ctx.roundRect(x, boxY, boxWidth, boxHeight, 8);
+  ctx.fill();
+
+  // Reset shadow
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+
+  // Border
+  ctx.strokeStyle = "rgba(48, 54, 61, 0.6)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Stats row
+  const itemY = boxY + 12;
+
+  // Longest
+  const longestDays = stats.streakLongest === 1 ? "day" : "days";
+  const longestValue = `${stats.streakLongest} ${longestDays}`;
+  drawFlexStatItem(
+    ctx,
+    longestValue,
+    "Longest",
+    stats.datesLongest,
+    x + 16,
+    itemY,
+  );
+
+  // Current
+  const currentDays = stats.streakCurrent === 1 ? "day" : "days";
+  const currentValue =
+    stats.streakCurrent === 0
+      ? "0 days"
+      : `${stats.streakCurrent} ${currentDays}`;
+  const currentSubtext =
+    stats.streakCurrent === 0 ? "No current streak" : stats.datesCurrent;
+  drawFlexStatItem(
+    ctx,
+    currentValue,
+    "Current",
+    currentSubtext,
+    x + 145,
+    itemY,
+  );
+}
+
+/**
+ * Draw a flex stat item (vertical stack: value → label → subtext)
+ * Matches HTML structure: d-block f2 text-bold → d-block text-small text-bold → d-block text-small color-fg-muted
+ * @param {CanvasRenderingContext2D} ctx - Canvas context
+ * @param {string} value - Main value (large, green, bold)
+ * @param {string} label - Label text (small, bold, white)
+ * @param {string} subtext - Subtext (small, gray, date range)
+ * @param {number} x - X position
+ * @param {number} y - Y position
+ */
+function drawFlexStatItem(ctx, value, label, subtext, x, y) {
+  // Value (24px, weight 600, green)
+  ctx.fillStyle = "#2BD853";
+  ctx.font = '600 24px "Segoe UI", sans-serif';
+  ctx.fillText(value, x, y + 22);
+
+  // Label (12px, weight 600, white)
+  ctx.fillStyle = "#ffffff";
+  ctx.font = '600 12px "Segoe UI", sans-serif';
+  ctx.fillText(label, x, y + 38);
+
+  // Subtext (12px, weight 400, gray) - single line
+  if (subtext && subtext.length > 0) {
+    ctx.fillStyle = "#b7bdc8";
+    ctx.font = '12px "Segoe UI", sans-serif';
+    ctx.fillText(subtext, x, y + 54);
+  }
 }
