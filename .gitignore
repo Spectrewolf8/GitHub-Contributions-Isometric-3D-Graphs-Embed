@@ -16,3 +16,6 @@ error-screenshot.png
 # API Cache
 .cache/*.png
 
+
+# Local MCP server config (may contain project refs; managed by the app)
+.mcp.json
