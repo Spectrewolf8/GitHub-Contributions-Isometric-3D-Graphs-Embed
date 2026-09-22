@@ -83,7 +83,9 @@ SUPABASE_URL=your_supabase_project_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-> **`GITHUB_TOKEN`**: A [GitHub personal access token](https://github.com/settings/tokens) is required. No scopes are needed for public contribution data — a classic token with no scopes selected works fine.
+> **`GITHUB_TOKEN`**: A [GitHub personal access token](https://github.com/settings/tokens) is required. No scopes are needed for public contribution data.
+>
+> **Use a _classic_ token, not a fine-grained one.** Organizations can restrict fine-grained tokens (for example, capping their lifetime). When an organization does, contributions to _its_ repositories, **even public ones**, are silently hidden from graphs for every user who contributes there, while GitHub still reports a self-consistent (smaller) total. Classic tokens aren't subject to these policies. The server prints a startup warning if it detects a fine-grained token.
 
 ## Quick Start
 
@@ -201,17 +203,19 @@ https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spe
 
 The API implements intelligent daily caching:
 
-- **Cache Duration**: 1 hour with revalidation (ensures freshness)
-- **Cache Strategy**: One generation per username+params per day
-- **Cache Headers**: Check `X-Cache` header (`HIT` or `MISS`)
-- **Benefits**: Instant responses for repeated requests with fresh updates
+- **Cache Strategy**: One generation per username+params per day, stored server-side in Supabase
+- **No client-side caching**: responses are sent with `Cache-Control: no-store`, so browsers and GitHub's image proxy always fetch a fresh image, so a README graph never shows stale data
+- **Cache Headers**: Check `X-Cache` header (`HIT` or `MISS`) to see whether the server-side cache was used
+- **Benefits**: Instant responses for repeated requests, without the client ever holding an outdated image
 
 **Cache Response Headers:**
 
 ```
 Content-Type: image/png
 Content-Length: <bytes>
-Cache-Control: public, max-age=3600, must-revalidate
+Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+Pragma: no-cache
+Expires: 0
 X-Cache: HIT | MISS
 ```
 
@@ -229,6 +233,37 @@ GET /docs
 ```
 GET /health
 ```
+
+**Contribution Summary:**
+
+```
+GET /api/status?username=<username>
+```
+
+Reports what GitHub counts for a user over the default 365-day window (the same number the graph is built from), split into public contributions and private contributions counted anonymously:
+
+```json
+{
+  "username": "octocat",
+  "from": "2025-09-23",
+  "to": "2026-09-22",
+  "total_contributions": 2087,
+  "public_contributions": 1702,
+  "private_contributions": 385,
+  "note": "2,087 contributions counted from 2025-09-23 to 2026-09-22. 385 of them are private contributions, counted anonymously ..."
+}
+```
+
+## Data Accuracy & Limitations
+
+Graphs are built from GitHub's official GraphQL API, and the total is the same number GitHub shows on your **public profile** ("N contributions in the last year"). In particular:
+
+- **Private contributions are included if you display them.** GitHub's profile setting _Contribution settings > Private contributions_ shows your private activity publicly, anonymized (green squares, no repo names). When it's on, those contributions are counted for every viewer, the graph included. When it's off, they're hidden from the public profile _and_ from the graph alike. Either way the graph matches what the public sees.
+- **The one thing that makes the graph lower than your profile is an organization's token policy.** An organization can restrict personal access tokens (for example, capping fine-grained token lifetimes). When it does, GitHub hides that organization's repositories, **even public ones**, from the service's token, and every contribution to them silently drops out of the graph while GitHub still reports a self-consistent (smaller) total. Nothing in the API flags this, so the service can't detect it; it can only tell you the possibility exists.
+
+`GET /api/status?username=...` (and the **Check my graph** tool on the docs page) shows exactly what's being counted for you: the total for the window, split into public and private-counted-anonymously. If that total matches your profile, the graph is complete.
+
+**If you run the server:** use a **classic** token. See the `GITHUB_TOKEN` note under [Environment Variables](#environment-variables): classic tokens aren't subject to per-organization fine-grained-token policies, which removes the only common cause of an under-count. The server warns at startup if it detects a fine-grained token.
 
 ## Programmatic Usage
 
@@ -422,6 +457,14 @@ CMD ["sh", "-c", "node server.js & node cleanup-scheduler.js & wait"]
 Just add the environment variables to your hosting platform.
 
 ## Troubleshooting
+
+### Graph looks sparse / total is lower than my profile
+
+Almost always one of these. Check `GET /api/status?username=<you>` first; if its total matches your profile, the graph is complete:
+
+- **Your private contributions aren't displayed.** If _Contribution settings > Private contributions_ is off on your profile, private activity is hidden from your public profile and from the graph alike, so the graph matches what visitors see, even if it's less than what you see when logged in. Turn the setting on to include them (anonymized). See [Data Accuracy & Limitations](#data-accuracy--limitations).
+- **An organization you contribute to restricts token access** (e.g. it caps fine-grained token lifetimes). That hides _its_ repos, even public ones, from the server's token, and those contributions drop out of the graph. If you run the server, switch to a **classic** token; the server warns at startup if it detects a fine-grained one.
+- **Commits weren't attributed to you.** The commit author email must be linked to your GitHub account, the commits must be on the default (or `gh-pages`) branch, and the repository must not be a fork. See GitHub's [why are my contributions not showing up](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-profile/managing-contribution-settings-on-your-profile/why-are-my-contributions-not-showing-up-on-my-profile).
 
 ### Cache Cleanup Issues
 

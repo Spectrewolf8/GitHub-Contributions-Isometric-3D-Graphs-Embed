@@ -52,6 +52,12 @@
         --heading-secondary: #1a7f37;
         --button-bg: #0969da;
         --button-hover: #0860ca;
+        --status-ok: #1a7f37;
+        --status-ok-bg: #dafbe1;
+        --status-warn: #9a6700;
+        --status-warn-bg: #fff8c5;
+        --status-error: #cf222e;
+        --status-error-bg: #ffebe9;
       }
 
       [data-theme="dark"] {
@@ -67,6 +73,12 @@
         --heading-secondary: #3fb950;
         --button-bg: #238636;
         --button-hover: #2ea043;
+        --status-ok: #3fb950;
+        --status-ok-bg: rgba(63, 185, 80, 0.14);
+        --status-warn: #d29922;
+        --status-warn-bg: rgba(210, 153, 34, 0.14);
+        --status-error: #f85149;
+        --status-error-bg: rgba(248, 81, 73, 0.14);
       }
 
       body {
@@ -181,6 +193,101 @@
       }
       a {
         color: var(--link-color);
+      }
+
+      /* "Check my graph": the result box mirrors the URL builder's preview box */
+      .status-result {
+        margin-top: 12px;
+        background: var(--bg-tertiary);
+        border: 2px solid var(--border-color);
+        border-radius: 6px;
+        padding: 12px;
+        min-height: 150px;
+        box-sizing: border-box;
+      }
+      .status-placeholder {
+        min-height: 126px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 13px;
+      }
+      /* display:flex above would otherwise override the hidden attribute,
+         leaving "Checking..." on screen next to the finished result */
+      .status-placeholder[hidden] {
+        display: none;
+      }
+      /* Chip sits inline inside the note sentence */
+      .status-badge {
+        display: inline-block;
+        padding: 1px 10px;
+        margin: 0 1px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        vertical-align: middle;
+      }
+      .ok .status-badge {
+        background: var(--status-ok-bg);
+        color: var(--status-ok);
+      }
+      .error .status-badge {
+        background: var(--status-error-bg);
+        color: var(--status-error);
+      }
+      .status-user {
+        font-weight: 600;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 13px;
+      }
+      .status-note {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.8;
+        color: var(--text-secondary);
+      }
+      /* Highlights inside the note: neutral for facts, green for the
+         private-contributions explanation, amber for the org-policy caution */
+      .status-hl {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .status-hl-ok {
+        font-weight: 600;
+        color: var(--status-ok);
+      }
+      .status-hl-warn {
+        font-weight: 600;
+        color: var(--status-warn);
+      }
+      .status-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-color);
+      }
+      .status-stat {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .status-stat-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+      .status-stat-value {
+        font-size: 20px;
+        font-weight: 600;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        line-height: 1.2;
       }
     </style>
   </head>
@@ -824,7 +931,11 @@
     <h2>Response Headers</h2>
     <ul>
       <li><code>Content-Type: image/png</code></li>
-      <li><code>Cache-Control: public, max-age=86400</code> (24 hours)</li>
+      <li>
+        <code>Cache-Control: no-store, no-cache, must-revalidate, max-age=0</code>
+        (images are never cached client-side, so README graphs are always
+        fresh; the 24-hour cache is server-side only)
+      </li>
       <li><code>X-Cache: HIT | MISS</code> (cache status)</li>
     </ul>
 
@@ -836,31 +947,144 @@
 }</pre
     >
 
-    <h2>Try It</h2>
-    <p>Try different themes and configurations:</p>
-    <ul>
-      <li>
-        <a
-          href="/api/graph?username=spectrewolf8&amp;year=2025&amp;stats=true"
-          target="_blank"
-          >GitHub theme with stats →</a
-        >
-      </li>
-      <li>
-        <a
-          href="/api/graph?username=spectrewolf8&amp;year=2025&amp;theme=dark&amp;stats=true"
-          target="_blank"
-          >Dark theme with stats →</a
-        >
-      </li>
-      <li>
-        <a
-          href="/api/graph?username=spectrewolf8&amp;theme=neon&amp;width=1200&amp;height=700&amp;year=2025&amp;credit=true&amp;stats=true"
-          target="_blank"
-          >Neon theme (large) →</a
-        >
-      </li>
-    </ul>
+    <h2 id="data-accuracy">Data Accuracy &amp; Limitations</h2>
+    <p>
+      Graphs are built from GitHub's official GraphQL API, and the total is the
+      same number GitHub shows on your <strong>public profile</strong>
+      ("N contributions in the last year").
+    </p>
+    <p>
+      <strong>Private contributions are included if you display them.</strong>
+      GitHub's profile setting <em>Contribution settings &gt; Private
+      contributions</em> shows your private activity publicly, anonymized
+      (green squares, no repo names). When it's on, those contributions are
+      counted for every viewer, the graph included. When it's off, they're
+      hidden from your public profile <em>and</em> from the graph alike.
+      Either way, the graph matches what the public sees.
+    </p>
+    <p>
+      <strong>The one thing that makes the graph lower than your profile is an
+      organization's token policy.</strong> An organization can restrict
+      personal access tokens (for example, capping fine-grained token
+      lifetimes). When it does, GitHub hides that organization's repositories,
+      <em>even public ones</em>, from the service's token, and every
+      contribution to them silently drops out of the graph. Nothing in the API
+      flags this, so the service can't detect it; it can only tell you the
+      possibility exists. <strong>If you run your own server</strong>, use a
+      <strong>classic</strong> token, which isn't subject to these policies.
+    </p>
+
+    <h2 style="cursor: pointer; user-select: none" onclick="toggleStatus()">
+      Check My Graph
+      <span
+        id="statusToggle"
+        style="
+          font-size: 0.7em;
+          color: var(--heading-primary);
+          font-weight: 500;
+          margin-left: 8px;
+        "
+        >[Hide] Click to collapse</span
+      >
+    </h2>
+
+    <div id="statusContent" style="display: block">
+      <p>
+        See exactly what's being counted for you over the last 365 days, and
+        how much of it is private activity counted anonymously. If the total
+        matches your profile, your graph is complete:
+      </p>
+
+      <div
+        style="
+          background: var(--bg-secondary);
+          padding: 16px;
+          border-radius: 8px;
+          margin: 16px 0;
+        "
+      >
+        <div>
+          <label
+            for="statusUsername"
+            style="
+              display: block;
+              margin-bottom: 4px;
+              font-weight: 600;
+              font-size: 13px;
+              color: var(--text-primary);
+            "
+          >
+            Username <span style="color: #cf222e">*</span>
+          </label>
+          <input
+            type="text"
+            id="statusUsername"
+            placeholder="e.g., spectrewolf8"
+            autocomplete="off"
+            spellcheck="false"
+            onkeydown="if (event.key === 'Enter' || event.keyCode === 13) checkGraphStatus()"
+            style="
+              width: 100%;
+              padding: 6px 10px;
+              border: 1px solid var(--border-color);
+              border-radius: 6px;
+              font-family: inherit;
+              font-size: 13px;
+              box-sizing: border-box;
+              background: var(--bg-tertiary);
+              color: var(--text-primary);
+            "
+          />
+        </div>
+
+        <div style="margin-top: 12px">
+          <button
+            id="statusButton"
+            type="button"
+            onclick="checkGraphStatus()"
+            style="
+              width: 100%;
+              padding: 10px 16px;
+              background: var(--button-bg);
+              color: white;
+              border: none;
+              border-radius: 6px;
+              cursor: pointer;
+              font-weight: 600;
+              font-size: 14px;
+              transition: background 0.2s ease;
+            "
+            onmouseover="this.style.background = 'var(--button-hover)'"
+            onmouseout="this.style.background = 'var(--button-bg)'"
+          >
+            Check Contributions
+          </button>
+        </div>
+
+        <div id="statusResult" class="status-result">
+          <div id="statusPlaceholder" class="status-placeholder">
+            Enter a username to see what's counted
+          </div>
+          <div id="statusDetails" hidden>
+            <p id="statusNote" class="status-note"></p>
+            <div id="statusStats" class="status-stats">
+              <div class="status-stat">
+                <span class="status-stat-label">Total counted</span>
+                <span id="statTotal" class="status-stat-value">-</span>
+              </div>
+              <div class="status-stat">
+                <span class="status-stat-label">Public</span>
+                <span id="statPublic" class="status-stat-value">-</span>
+              </div>
+              <div class="status-stat">
+                <span class="status-stat-label">Private (anonymized)</span>
+                <span id="statPrivate" class="status-stat-value">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <h2>API Usage Statistics</h2>
 
@@ -1445,6 +1669,132 @@
       }
 
       // Fetch and display analytics
+      // "Check my graph": explains, in plain language, whether a user's graph
+      // is under-counted and why the image alone can't say more.
+      // Collapse/expand, mirroring toggleBuilder() for the URL Builder
+      function toggleStatus() {
+        const content = document.getElementById("statusContent");
+        const toggle = document.getElementById("statusToggle");
+        if (content.style.display === "none") {
+          content.style.display = "block";
+          toggle.textContent = "[Hide] Click to collapse";
+        } else {
+          content.style.display = "none";
+          toggle.textContent = "[Show] Click to expand";
+        }
+      }
+
+      // Builds a highlighted fragment for the note. API values only ever go in
+      // as textContent, so nothing from the response is parsed as markup.
+      function statusSpan(className, text) {
+        const span = document.createElement("span");
+        span.className = className;
+        span.textContent = text;
+        return span;
+      }
+
+      async function checkGraphStatus() {
+        const input = document.getElementById("statusUsername");
+        const button = document.getElementById("statusButton");
+        const result = document.getElementById("statusResult");
+        const placeholder = document.getElementById("statusPlaceholder");
+        const details = document.getElementById("statusDetails");
+        const note = document.getElementById("statusNote");
+        const stats = document.getElementById("statusStats");
+
+        const username = input.value.trim();
+        if (!username) {
+          input.focus();
+          return;
+        }
+
+        // Loading state, shown in the result box like the builder's preview
+        button.disabled = true;
+        button.textContent = "Checking...";
+        details.hidden = true;
+        placeholder.hidden = false;
+        placeholder.textContent = "Checking...";
+
+        // Everything below is API data, so always textContent, never innerHTML
+        try {
+          const res = await fetch(
+            `/api/status?username=${encodeURIComponent(username)}`,
+          );
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+          // Informational, not a verdict: the service can't detect an
+          // org-policy gap, so it reports what's counted and lets the user
+          // compare against their profile. The sentence is composed here from
+          // the structured fields so key phrases can be highlighted.
+          result.className = "status-result ok";
+          const fmt = (n) => n.toLocaleString();
+          const parts = [
+            statusSpan(
+              "status-hl",
+              `${fmt(data.total_contributions)} contributions`,
+            ),
+            " counted for ",
+            statusSpan("status-user", `@${data.username}`),
+            " over the last 365 days (",
+            statusSpan("status-badge", `${data.from} to ${data.to}`),
+            "). ",
+          ];
+          if (data.private_contributions > 0) {
+            parts.push(
+              statusSpan("status-hl", fmt(data.private_contributions)),
+              " of them are ",
+              statusSpan(
+                "status-hl-ok",
+                "private contributions, counted anonymously",
+              ),
+              " because you display private contributions on your profile. ",
+            );
+          } else {
+            parts.push(
+              "None are private: either you have no private contributions in this window, or you don't display them on your profile (in which case your public profile hides them too). ",
+            );
+          }
+          parts.push(
+            "This total ",
+            statusSpan(
+              "status-hl",
+              "should match the number on your GitHub profile",
+            ),
+            ". If the graph shows less, an ",
+            statusSpan("status-hl-warn", "organization you contribute to"),
+            " is most likely ",
+            statusSpan("status-hl-warn", "restricting this service's token"),
+            ".",
+          );
+          note.replaceChildren(...parts);
+          document.getElementById("statTotal").textContent = fmt(
+            data.total_contributions,
+          );
+          document.getElementById("statPublic").textContent = fmt(
+            data.public_contributions,
+          );
+          document.getElementById("statPrivate").textContent = fmt(
+            data.private_contributions,
+          );
+          stats.hidden = false;
+        } catch (err) {
+          result.className = "status-result error";
+          note.replaceChildren(
+            statusSpan("status-badge", "Error"),
+            " Couldn't check ",
+            statusSpan("status-user", `@${username}`),
+            `: ${err.message}`,
+          );
+          stats.hidden = true; // no numbers to show on failure
+        } finally {
+          button.disabled = false;
+          button.textContent = "Check Contributions";
+          placeholder.hidden = true;
+          details.hidden = false;
+        }
+      }
+
       async function loadAnalytics() {
         try {
           const response = await fetch("/api/analytics");
