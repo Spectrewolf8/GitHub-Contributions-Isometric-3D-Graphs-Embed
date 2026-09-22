@@ -211,6 +211,15 @@
         overflow-y: auto;
         font-size: 13px;
         z-index: 900;
+        transition:
+          opacity 0.25s ease,
+          visibility 0.25s ease;
+      }
+      /* Hidden while a full-width section (the theme gallery) is on screen */
+      .toc.toc-hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
       }
       .toc-title {
         font-size: 11px;
@@ -505,14 +514,20 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 16px;
-        margin: 16px 0;
+        gap: 18px;
+        /* Break out wider than the body so 3 cards can be larger. The TOC
+           fades out while this section is on screen (see toc-hidden) so the
+           two never overlap. */
+        width: min(1120px, calc(100vw - 48px));
+        margin: 24px 0;
+        margin-left: 50%;
+        transform: translateX(-50%);
       }
       .theme-card {
         display: flex;
         flex-direction: column;
-        flex: 1 1 240px;
-        max-width: 300px;
+        flex: 1 1 300px;
+        max-width: 352px;
         border: 1px solid var(--border-color);
         border-radius: 8px;
         overflow: hidden;
@@ -2482,6 +2497,19 @@
         window.addEventListener("scroll", spy, { passive: true });
         window.addEventListener("resize", spy);
         spy();
+
+        // The theme gallery breaks out wider than the body, so fade the TOC
+        // out while it's on screen to avoid overlap, and restore it after.
+        const gallery = document.querySelector(".theme-grid");
+        if (gallery && "IntersectionObserver" in window) {
+          const io = new IntersectionObserver(
+            (entries) => {
+              nav.classList.toggle("toc-hidden", entries[0].isIntersecting);
+            },
+            { rootMargin: "-25% 0px -25% 0px" },
+          );
+          io.observe(gallery);
+        }
       }
 
       buildTableOfContents();
