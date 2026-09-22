@@ -35,6 +35,34 @@ Generate beautiful 3D isometric visualizations of GitHub contribution graphs. Av
   </tr>
   <tr>
     <td align="center">
+      <img src="media/examples/output-catppuccin.png" width="300" alt="Catppuccin Theme"/><br/>
+      <b>Catppuccin Theme</b>
+    </td>
+    <td align="center">
+      <img src="media/examples/output-dracula.png" width="300" alt="Dracula Theme"/><br/>
+      <b>Dracula Theme</b>
+    </td>
+    <td align="center">
+      <img src="media/examples/output-crimson.png" width="300" alt="Crimson Theme"/><br/>
+      <b>Crimson Theme</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="media/examples/output-tokyonight.png" width="300" alt="Tokyo Night Theme"/><br/>
+      <b>Tokyo Night Theme</b>
+    </td>
+    <td align="center">
+      <img src="media/examples/output-sunset.png" width="300" alt="Sunset Theme"/><br/>
+      <b>Sunset Theme</b>
+    </td>
+    <td align="center">
+      <img src="media/examples/output-sakura.png" width="300" alt="Sakura Theme"/><br/>
+      <b>Sakura Theme</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
       <img src="media/examples/output-not-stats.png" width="300" alt="Without Stats"/><br/>
       <b>Without Stats</b>
     </td>
@@ -60,7 +88,8 @@ Generate beautiful 3D isometric visualizations of GitHub contribution graphs. Av
 ## Features
 
 - ⚡ **Fast API** with intelligent caching and revalidation
-- 🎨 **6 Built-in Themes**: GitHub, Dark, Light, Neon, Minimal, Ocean
+- 🎨 **12 Built-in Themes**: GitHub, Dark, Light, Neon, Minimal, Ocean, Catppuccin, Dracula, Crimson, Tokyo Night, Sunset, Sakura
+- 🖌️ **Custom Themes**: design your own colors via the API or the in-page theme builder
 - 📊 **Statistics Overlay**: Contributions, streaks, averages
 - 🖼️ **Customizable**: Dimensions, year selection, credits, themes
 - 🚀 **Minimal**: Lightweight with no framework overhead
@@ -147,7 +176,11 @@ GET /api/graph
 | ---------- | ------------- | -------- | ----------------- | ------------------------------------------------------------------------------- |
 | `username` | string        | ✅ Yes   | -                 | GitHub username                                                                 |
 | `year`/`y` | number/string | No       | `none` (365 days) | Year to fetch (e.g., `2025`), or `none` for 365-day rolling window ending today |
-| `theme`    | string        | No       | `github`          | Visual theme: `github`, `dark`, `light`, `neon`, `minimal`, `ocean`             |
+| `theme`    | string        | No       | `github`          | Visual theme: `github`, `dark`, `light`, `neon`, `minimal`, `ocean`, `catppuccin`, `dracula`, `crimson`, `tokyonight`, `sunset`, `sakura`, or `custom` (see [Custom Themes](#custom-themes)) |
+| `colors`   | string        | No       | -                 | Custom mode only. Five comma-separated hex colors for the cube levels 0 to 4, e.g. `colors=161b22,0e4429,006d32,26a641,39d353` (leading `#` optional) |
+| `bg`       | string        | No       | -                 | Custom mode only. Hex background for the stats box (applies only with `stats=true`)             |
+| `border`   | string        | No       | -                 | Custom mode only. Hex border for the stats box (applies only with `stats=true`)                 |
+| `accent`   | string        | No       | -                 | Custom mode only. Hex accent for the stats title/value text (applies only with `stats=true`)    |
 | `width`    | number        | No       | `1000`            | Image width in pixels                                                           |
 | `height`   | number        | No       | `600`             | Image height in pixels                                                          |
 | `stats`    | boolean       | No       | `false`           | Include statistics overlay                                                      |
@@ -198,6 +231,22 @@ https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spe
 ```
 
 > **Note:** Use `http://localhost:3000` for local testing.
+
+### Custom Themes
+
+Beyond the built-in themes, you can design your own. Set `theme=custom` and pass five hex colors for the contribution levels (0 to 4, low to high):
+
+```
+https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&theme=custom&colors=0d1117,3a1078,4e31aa,3795bd,aad7d9
+```
+
+The stats box can be styled too, but only when the overlay is on (`stats=true`): `bg` sets the box background, `border` the box border, and `accent` the title/value text. Anything you leave out is derived automatically (text color is chosen for legibility against `bg`):
+
+```
+https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&theme=custom&colors=0d1117,3a1078,4e31aa,3795bd,aad7d9&bg=0d1117&border=aad7d9&accent=aad7d9&stats=true
+```
+
+The easiest way to build one is the **URL and Theme Builder** on the [live docs page](https://isometric-contributions-spectrewolf8.onrender.com/): pick <b>Custom</b> in the theme dropdown, choose your colors with the pickers (or paste hex values), and copy the generated URL.
 
 ### Caching
 
@@ -322,11 +371,28 @@ import {
   NEON_THEME,
   MINIMAL_THEME,
   OCEAN_THEME,
+  CATPPUCCIN_THEME,
+  DRACULA_THEME,
+  CRIMSON_THEME,
+  TOKYONIGHT_THEME,
+  SUNSET_THEME,
+  SAKURA_THEME,
+  buildCustomTheme,
 } from "./src/theme-config.js";
 import { setTheme } from "./src/renderer.js";
 
-// Apply theme before rendering
+// Apply a built-in theme before rendering
 setTheme(NEON_THEME);
+
+// Or build your own from a 5-color ramp (level 0 to 4)
+setTheme(
+  buildCustomTheme({
+    colors: ["#0d1117", "#3a1078", "#4e31aa", "#3795bd", "#aad7d9"],
+    bg: "#0d1117",
+    border: "#aad7d9",
+    accent: "#aad7d9",
+  }),
+);
 ```
 
 ## Embedding in README

@@ -33,6 +33,13 @@ import {
   NEON_THEME,
   MINIMAL_THEME,
   OCEAN_THEME,
+  CATPPUCCIN_THEME,
+  DRACULA_THEME,
+  CRIMSON_THEME,
+  TOKYONIGHT_THEME,
+  SUNSET_THEME,
+  SAKURA_THEME,
+  buildCustomTheme,
 } from "./src/theme-config.js";
 // Available themes mapping
 const AVAILABLE_THEMES = {
@@ -42,6 +49,12 @@ const AVAILABLE_THEMES = {
   neon: NEON_THEME,
   minimal: MINIMAL_THEME,
   ocean: OCEAN_THEME,
+  catppuccin: CATPPUCCIN_THEME,
+  dracula: DRACULA_THEME,
+  crimson: CRIMSON_THEME,
+  tokyonight: TOKYONIGHT_THEME,
+  sunset: SUNSET_THEME,
+  sakura: SAKURA_THEME,
 };
 const PORT = process.env.PORT || 3000;
 const BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME || "isometric-cache";
@@ -192,6 +205,13 @@ function parseQueryParams(search) {
     stats: params.get("stats") === "true",
     credit: params.get("credit") === "true",
     theme: params.get("theme") || "github",
+    // Custom theme colors (used when theme=custom or any color is supplied).
+    // `colors` is 5 comma-separated hex values for the cube ramp (level0..4).
+    colors: params.get("colors") || null,
+    bg: params.get("bg") || null,
+    border: params.get("border") || null,
+    accent: params.get("accent") || null,
+    labelColor: params.get("label") || null,
   };
 }
 
@@ -203,8 +223,25 @@ function parseQueryParams(search) {
 async function generateGraph(params) {
   const { username, year, width, height, stats, credit, theme } = params;
 
-  // Set theme if specified
-  if (theme && AVAILABLE_THEMES[theme.toLowerCase()]) {
+  // Apply theme. A custom theme (theme=custom, or any color param present) is
+  // built from the user's colors; otherwise use a named preset.
+  const isCustom =
+    (theme && theme.toLowerCase() === "custom") ||
+    params.colors ||
+    params.bg ||
+    params.border ||
+    params.accent;
+  if (isCustom) {
+    setTheme(
+      buildCustomTheme({
+        colors: params.colors ? params.colors.split(",") : [],
+        bg: params.bg,
+        border: params.border,
+        accent: params.accent,
+        label: params.labelColor,
+      }),
+    );
+  } else if (theme && AVAILABLE_THEMES[theme.toLowerCase()]) {
     setTheme(AVAILABLE_THEMES[theme.toLowerCase()]);
   }
 
