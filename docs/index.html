@@ -499,6 +499,57 @@
         pointer-events: none;
         user-select: none;
       }
+
+      /* Theme Gallery: one card per theme */
+      .theme-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 18px;
+        /* Break out wider than the 900px body so 3 cards can be larger */
+        width: min(1120px, calc(100vw - 48px));
+        margin: 24px 0;
+        margin-left: 50%;
+        transform: translateX(-50%);
+      }
+      .theme-card {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 300px;
+        max-width: 352px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--bg-secondary);
+      }
+      .theme-card img {
+        width: 100%;
+        display: block;
+        background: var(--bg-tertiary);
+        border-top: 1px solid var(--border-color);
+      }
+      .theme-card-title {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 10px 12px;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text-primary);
+      }
+      .theme-card-title code {
+        font-weight: 400;
+        font-size: 11px;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        padding: 2px 6px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        color: var(--text-secondary);
+        word-break: break-all;
+      }
       .fb-toggles {
         display: flex;
         gap: 20px;
@@ -1043,180 +1094,60 @@
 
     <h2>Theme Gallery</h2>
     <p>Preview different themes with the same data:</p>
-    <table style="text-align: center">
-      <thead>
-        <tr>
-          <th>Theme</th>
-          <th>Preview</th>
-          <th>URL</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>GitHub</strong></td>
-          <td>
-            <img
-              src="/media/examples/output-github.png"
-              alt="GitHub Theme"
-              style="max-width: 200px; border: 1px solid #ddd"
-            />
-          </td>
-          <td>
-            <code>/api/graph?username=spectrewolf8&amp;theme=github</code>
-          </td>
-        </tr>
-        <tr>
-          <td><strong>Dark</strong></td>
-          <td>
-            <img
-              src="/media/examples/output-dark.png"
-              alt="Dark Theme"
-              style="max-width: 200px; border: 1px solid #ddd"
-            />
-          </td>
-          <td><code>/api/graph?username=spectrewolf8&amp;theme=dark</code></td>
-        </tr>
-        <tr>
-          <td><strong>Light</strong></td>
-          <td>
-            <img
-              src="/media/examples/output-light.png"
-              alt="Light Theme"
-              style="max-width: 200px; border: 1px solid #ddd"
-            />
-          </td>
-          <td><code>/api/graph?username=spectrewolf8&amp;theme=light</code></td>
-        </tr>
-        <tr>
-          <td><strong>Neon</strong></td>
-          <td>
-            <img
-              src="/media/examples/output-neon.png"
-              alt="Neon Theme"
-              style="max-width: 200px; border: 1px solid #ddd"
-            />
-          </td>
-          <td><code>/api/graph?username=spectrewolf8&amp;theme=neon</code></td>
-        </tr>
-        <tr>
-          <td><strong>Minimal</strong></td>
-          <td>
-            <img
-              src="/media/examples/output-minimal.png"
-              alt="Minimal Theme"
-              style="max-width: 200px; border: 1px solid #ddd"
-            />
-          </td>
-          <td>
-            <code>/api/graph?username=spectrewolf8&amp;theme=minimal</code>
-          </td>
-        </tr>
-        <tr>
-          <td><strong>Ocean</strong></td>
-          <td>
-            <img
-              src="/media/examples/output-ocean.png"
-              alt="Ocean Theme"
-              style="max-width: 200px; border: 1px solid #ddd"
-            />
-          </td>
-          <td><code>/api/graph?username=spectrewolf8&amp;theme=ocean</code></td>
-        </tr>
-        <tr>
-          <td><strong>Catppuccin</strong></td>
-          <td>
-            <img
-              src="/media/examples/output-catppuccin.png"
-              alt="Catppuccin Theme"
-              style="max-width: 200px; border: 1px solid #ddd"
-            />
-          </td>
-          <td>
-            <code>/api/graph?username=spectrewolf8&amp;theme=catppuccin</code>
-          </td>
-        </tr>
-        <tr>
-          <td><strong>Dracula</strong></td>
-          <td>
-            <img
-              src="/media/examples/output-dracula.png"
-              alt="Dracula Theme"
-              style="max-width: 200px; border: 1px solid #ddd"
-            />
-          </td>
-          <td>
-            <code>/api/graph?username=spectrewolf8&amp;theme=dracula</code>
-          </td>
-        </tr>
-        <tr>
-          <td><strong>Crimson</strong></td>
-          <td>
-            <img
-              src="/media/examples/output-crimson.png"
-              alt="Crimson Theme"
-              style="max-width: 200px; border: 1px solid #ddd"
-            />
-          </td>
-          <td>
-            <code>/api/graph?username=spectrewolf8&amp;theme=crimson</code>
-          </td>
-        </tr>
-        <tr>
-          <td><strong>Tokyo Night</strong></td>
-          <td>
-            <img
-              src="/media/examples/output-tokyonight.png"
-              alt="Tokyo Night Theme"
-              style="max-width: 200px; border: 1px solid #ddd"
-            />
-          </td>
-          <td>
-            <code>/api/graph?username=spectrewolf8&amp;theme=tokyonight</code>
-          </td>
-        </tr>
-        <tr>
-          <td><strong>Sunset</strong></td>
-          <td>
-            <img
-              src="/media/examples/output-sunset.png"
-              alt="Sunset Theme"
-              style="max-width: 200px; border: 1px solid #ddd"
-            />
-          </td>
-          <td>
-            <code>/api/graph?username=spectrewolf8&amp;theme=sunset</code>
-          </td>
-        </tr>
-        <tr>
-          <td><strong>Sakura</strong></td>
-          <td>
-            <img
-              src="/media/examples/output-sakura.png"
-              alt="Sakura Theme"
-              style="max-width: 200px; border: 1px solid #ddd"
-            />
-          </td>
-          <td>
-            <code>/api/graph?username=spectrewolf8&amp;theme=sakura</code>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <strong> (Default)</strong><br /><strong
-              >365-Day Rolling Window</strong
-            >
-          </td>
-          <td>
-            <img
-              src="/media/examples/output-rolling-window.png"
-              alt="365-Day Rolling Window"
-              style="max-width: 200px; border: 1px solid #ddd"
-            />
-          </td>
-          <td><code>/api/graph?username=spectrewolf8&amp;year=none</code></td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="theme-grid">
+      <div class="theme-card">
+        <div class="theme-card-title"><span>GitHub</span><code>?theme=github</code></div>
+        <img src="/media/examples/output-github.png" alt="GitHub Theme" loading="lazy" />
+      </div>
+      <div class="theme-card">
+        <div class="theme-card-title"><span>Dark</span><code>?theme=dark</code></div>
+        <img src="/media/examples/output-dark.png" alt="Dark Theme" loading="lazy" />
+      </div>
+      <div class="theme-card">
+        <div class="theme-card-title"><span>Light</span><code>?theme=light</code></div>
+        <img src="/media/examples/output-light.png" alt="Light Theme" loading="lazy" />
+      </div>
+      <div class="theme-card">
+        <div class="theme-card-title"><span>Neon</span><code>?theme=neon</code></div>
+        <img src="/media/examples/output-neon.png" alt="Neon Theme" loading="lazy" />
+      </div>
+      <div class="theme-card">
+        <div class="theme-card-title"><span>Minimal</span><code>?theme=minimal</code></div>
+        <img src="/media/examples/output-minimal.png" alt="Minimal Theme" loading="lazy" />
+      </div>
+      <div class="theme-card">
+        <div class="theme-card-title"><span>Ocean</span><code>?theme=ocean</code></div>
+        <img src="/media/examples/output-ocean.png" alt="Ocean Theme" loading="lazy" />
+      </div>
+      <div class="theme-card">
+        <div class="theme-card-title"><span>Catppuccin</span><code>?theme=catppuccin</code></div>
+        <img src="/media/examples/output-catppuccin.png" alt="Catppuccin Theme" loading="lazy" />
+      </div>
+      <div class="theme-card">
+        <div class="theme-card-title"><span>Dracula</span><code>?theme=dracula</code></div>
+        <img src="/media/examples/output-dracula.png" alt="Dracula Theme" loading="lazy" />
+      </div>
+      <div class="theme-card">
+        <div class="theme-card-title"><span>Crimson</span><code>?theme=crimson</code></div>
+        <img src="/media/examples/output-crimson.png" alt="Crimson Theme" loading="lazy" />
+      </div>
+      <div class="theme-card">
+        <div class="theme-card-title"><span>Tokyo Night</span><code>?theme=tokyonight</code></div>
+        <img src="/media/examples/output-tokyonight.png" alt="Tokyo Night Theme" loading="lazy" />
+      </div>
+      <div class="theme-card">
+        <div class="theme-card-title"><span>Sunset</span><code>?theme=sunset</code></div>
+        <img src="/media/examples/output-sunset.png" alt="Sunset Theme" loading="lazy" />
+      </div>
+      <div class="theme-card">
+        <div class="theme-card-title"><span>Sakura</span><code>?theme=sakura</code></div>
+        <img src="/media/examples/output-sakura.png" alt="Sakura Theme" loading="lazy" />
+      </div>
+      <div class="theme-card">
+        <div class="theme-card-title"><span>365-Day Rolling Window</span><code>?year=none</code></div>
+        <img src="/media/examples/output-rolling-window.png" alt="365-Day Rolling Window" loading="lazy" />
+      </div>
+    </div>
 
     <h2>Examples</h2>
 
