@@ -302,6 +302,279 @@
         }
       }
 
+      /* Theme Builder: custom color pickers + live preview */
+      .tb-wrap {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        background: var(--bg-secondary);
+        padding: 16px;
+        border-radius: 8px;
+        margin: 16px 0;
+      }
+      .tb-controls {
+        flex: 1 1 320px;
+        min-width: 280px;
+      }
+      .tb-preview {
+        flex: 1 1 360px;
+        min-width: 280px;
+      }
+      .tb-preview img {
+        max-width: 100%;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--bg-tertiary);
+      }
+      .tb-preview .tb-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 160px;
+        border: 2px dashed var(--border-color);
+        border-radius: 6px;
+        color: var(--text-secondary);
+        font-size: 13px;
+        text-align: center;
+        padding: 12px;
+      }
+      .tb-group-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 12px 0 6px;
+      }
+      .tb-ramp,
+      .tb-extra {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .tb-field {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        color: var(--text-secondary);
+      }
+      .tb-field input[type="color"] {
+        width: 46px;
+        height: 34px;
+        padding: 2px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--bg-tertiary);
+        cursor: pointer;
+      }
+      .tb-field input[type="text"] {
+        width: 68px;
+        margin-top: 5px;
+        padding: 3px 4px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 11px;
+        text-align: center;
+        text-transform: lowercase;
+        box-sizing: border-box;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+      .tb-field input[type="text"].tb-hex-invalid {
+        border-color: var(--status-error, #cf222e);
+      }
+      .tb-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .tb-btn {
+        padding: 8px 16px;
+        background: var(--button-bg);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      .tb-btn:hover {
+        background: var(--button-hover);
+      }
+      .tb-url {
+        width: 100%;
+        margin-top: 12px;
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 12px;
+        box-sizing: border-box;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+      .tb-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        cursor: pointer;
+      }
+
+      /* URL and Theme Builder: sectioned layout */
+      .fb {
+        background: var(--bg-secondary);
+        padding: 4px 18px 18px;
+        border-radius: 8px;
+        margin: 16px 0;
+      }
+      .fb-section {
+        padding: 16px 0;
+        border-top: 1px solid var(--border-color);
+      }
+      .fb-section:first-child {
+        border-top: none;
+      }
+      .fb-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-secondary);
+        margin: 0 0 12px;
+      }
+      .fb-step {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--button-bg);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .fb-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+      }
+      .fb-label {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--text-primary);
+      }
+      .fb-input,
+      .fb-select {
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 13px;
+        box-sizing: border-box;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+      .fb-hint {
+        margin: 6px 0 0;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      /* Disabled/blurred state for controls that need another option on first */
+      .fb-disabled {
+        opacity: 0.45;
+        filter: blur(1px);
+        pointer-events: none;
+        user-select: none;
+      }
+      .fb-toggles {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+      .fb-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--text-primary);
+      }
+      .fb-format {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .fb-radio {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .fb-out-row {
+        display: flex;
+        gap: 8px;
+      }
+      .fb-url {
+        flex: 1;
+        min-width: 0;
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 12px;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+      .fb-btn {
+        padding: 10px 16px;
+        background: var(--button-bg);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        white-space: nowrap;
+        transition: background 0.15s ease;
+      }
+      .fb-btn:hover {
+        background: var(--button-hover);
+      }
+      .fb-btn-block {
+        width: 100%;
+        margin-top: 12px;
+      }
+      .fb-preview {
+        margin-top: 12px;
+        background: var(--bg-tertiary);
+        border: 2px solid var(--border-color);
+        border-radius: 6px;
+        padding: 12px;
+        text-align: center;
+        min-height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
       /* Hide the floating TOC when there isn't room beside the centered body */
       @media (max-width: 1439px) {
         .toc {
@@ -509,14 +782,21 @@
           <td>
             Visual theme: <code>github</code>, <code>dark</code>,
             <code>light</code>, <code>neon</code>, <code>minimal</code>,
-            <code>ocean</code>
+            <code>ocean</code>, <code>catppuccin</code>, <code>dracula</code>,
+            <code>crimson</code>, <code>tokyonight</code>, <code>sunset</code>,
+            <code>sakura</code>, or <code>custom</code> (see the
+            <a href="#url-builder">URL and Theme Builder</a>)
           </td>
         </tr>
       </tbody>
     </table>
 
-    <h2 style="cursor: pointer; user-select: none" onclick="toggleBuilder()">
-      URL Builder
+    <h2
+      id="url-builder"
+      style="cursor: pointer; user-select: none"
+      onclick="toggleBuilder()"
+    >
+      URL and Theme Builder
       <span
         id="builderToggle"
         style="
@@ -530,364 +810,234 @@
     </h2>
 
     <div id="urlBuilderContent" style="display: block">
-      <p>Build your custom graph URL with live preview:</p>
+      <p>
+        Build your graph URL with a live preview. Choose a preset theme, or
+        pick <strong>Custom</strong> to design your own colors.
+      </p>
 
-      <div
-        style="
-          background: var(--bg-secondary);
-          padding: 16px;
-          border-radius: 8px;
-          margin: 16px 0;
-        "
-      >
-        <div
-          style="
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 12px;
-          "
-        >
-          <div>
-            <label
-              for="builderUsername"
-              style="
-                display: block;
-                margin-bottom: 4px;
-                font-weight: 600;
-                font-size: 13px;
-                color: var(--text-primary);
-              "
-            >
-              Username <span style="color: #cf222e">*</span>
-            </label>
-            <input
-              type="text"
-              id="builderUsername"
-              placeholder="e.g., spectrewolf8"
-              style="
-                width: 100%;
-                padding: 6px 10px;
-                border: 1px solid var(--border-color);
-                border-radius: 6px;
-                font-family: inherit;
-                font-size: 13px;
-                box-sizing: border-box;
-                background: var(--bg-tertiary);
-                color: var(--text-primary);
-              "
-            />
-          </div>
+      <div class="fb">
+        <section class="fb-section">
+          <div class="fb-title"><span class="fb-step">1</span>Profile</div>
+          <label class="fb-label" for="builderUsername">
+            GitHub username <span style="color: #cf222e">*</span>
+          </label>
+          <input
+            type="text"
+            id="builderUsername"
+            class="fb-input"
+            placeholder="e.g., spectrewolf8"
+          />
+        </section>
 
-          <div>
-            <label
-              for="builderTheme"
-              style="
-                display: block;
-                margin-bottom: 4px;
-                font-weight: 600;
-                font-size: 13px;
-                color: var(--text-primary);
-              "
-            >
-              Theme
-            </label>
-            <select
-              id="builderTheme"
-              style="
-                width: 100%;
-                padding: 6px 10px;
-                border: 1px solid var(--border-color);
-                border-radius: 6px;
-                font-family: inherit;
-                font-size: 13px;
-                box-sizing: border-box;
-                background: var(--bg-tertiary);
-                color: var(--text-primary);
-              "
-            >
-              <option value="github">GitHub</option>
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
-              <option value="neon">Neon</option>
-              <option value="minimal">Minimal</option>
-              <option value="ocean">Ocean</option>
-            </select>
-          </div>
+        <section class="fb-section">
+          <div class="fb-title"><span class="fb-step">2</span>Appearance</div>
+          <label class="fb-label" for="builderTheme">Theme</label>
+          <select
+            id="builderTheme"
+            class="fb-select"
+            onchange="toggleCustomPanel()"
+          >
+            <option value="github">GitHub</option>
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="neon">Neon</option>
+            <option value="minimal">Minimal</option>
+            <option value="ocean">Ocean</option>
+            <option value="catppuccin">Catppuccin</option>
+            <option value="dracula">Dracula</option>
+            <option value="crimson">Crimson</option>
+            <option value="tokyonight">Tokyo Night</option>
+            <option value="sunset">Sunset</option>
+            <option value="sakura">Sakura</option>
+            <option value="custom">Custom…</option>
+          </select>
+          <p class="fb-hint">
+            Pick <strong>Custom</strong> to design your own colors below.
+          </p>
 
-          <div>
-            <label
-              for="builderYear"
-              style="
-                display: block;
-                margin-bottom: 4px;
-                font-weight: 600;
-                font-size: 13px;
-                color: var(--text-primary);
-              "
-            >
-              Year
-            </label>
-            <input
-              type="number"
-              id="builderYear"
-              placeholder="2025"
-              min="2008"
-              max="2030"
-              style="
-                width: 100%;
-                padding: 6px 10px;
-                border: 1px solid var(--border-color);
-                border-radius: 6px;
-                font-family: inherit;
-                font-size: 13px;
-                box-sizing: border-box;
-                background: var(--bg-tertiary);
-                color: var(--text-primary);
-              "
-            />
-          </div>
-
-          <div>
-            <label
-              for="builderWidth"
-              style="
-                display: block;
-                margin-bottom: 4px;
-                font-weight: 600;
-                font-size: 13px;
-                color: var(--text-primary);
-              "
-            >
-              Width (px)
-            </label>
-            <input
-              type="number"
-              id="builderWidth"
-              placeholder="1000"
-              min="400"
-              max="3000"
-              style="
-                width: 100%;
-                padding: 6px 10px;
-                border: 1px solid var(--border-color);
-                border-radius: 6px;
-                font-family: inherit;
-                font-size: 13px;
-                box-sizing: border-box;
-                background: var(--bg-tertiary);
-                color: var(--text-primary);
-              "
-            />
-          </div>
-
-          <div>
-            <label
-              for="builderHeight"
-              style="
-                display: block;
-                margin-bottom: 4px;
-                font-weight: 600;
-                font-size: 13px;
-                color: var(--text-primary);
-              "
-            >
-              Height (px)
-            </label>
-            <input
-              type="number"
-              id="builderHeight"
-              placeholder="600"
-              min="300"
-              max="2000"
-              style="
-                width: 100%;
-                padding: 6px 10px;
-                border: 1px solid var(--border-color);
-                border-radius: 6px;
-                font-family: inherit;
-                font-size: 13px;
-                box-sizing: border-box;
-                background: var(--bg-tertiary);
-                color: var(--text-primary);
-              "
-            />
-          </div>
-
+          <div id="builderCustomPanel" style="display: none; margin-top: 12px">
           <div
             style="
               display: flex;
-              gap: 12px;
-              align-items: flex-end;
-              padding-bottom: 6px;
+              gap: 28px;
+              flex-wrap: wrap;
+              align-items: flex-start;
             "
           >
-            <label
-              style="
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                cursor: pointer;
-              "
-            >
-              <input
-                type="checkbox"
-                id="builderStats"
-                style="cursor: pointer"
-              />
-              <span
+            <div>
+              <div class="tb-group-label" style="margin-top: 0">
+                Contribution levels (low to high)
+              </div>
+              <div class="tb-ramp">
+                <div class="tb-field">
+                  <input type="color" id="tb0" value="#161b22" oninput="tbSync('tb0')" />
+                  <input type="text" id="tb0Hex" value="#161b22" spellcheck="false" maxlength="7" oninput="tbSyncHex('tb0')" />
+                  <span>Level 0</span>
+                </div>
+                <div class="tb-field">
+                  <input type="color" id="tb1" value="#0e4429" oninput="tbSync('tb1')" />
+                  <input type="text" id="tb1Hex" value="#0e4429" spellcheck="false" maxlength="7" oninput="tbSyncHex('tb1')" />
+                  <span>Level 1</span>
+                </div>
+                <div class="tb-field">
+                  <input type="color" id="tb2" value="#006d32" oninput="tbSync('tb2')" />
+                  <input type="text" id="tb2Hex" value="#006d32" spellcheck="false" maxlength="7" oninput="tbSyncHex('tb2')" />
+                  <span>Level 2</span>
+                </div>
+                <div class="tb-field">
+                  <input type="color" id="tb3" value="#26a641" oninput="tbSync('tb3')" />
+                  <input type="text" id="tb3Hex" value="#26a641" spellcheck="false" maxlength="7" oninput="tbSyncHex('tb3')" />
+                  <span>Level 3</span>
+                </div>
+                <div class="tb-field">
+                  <input type="color" id="tb4" value="#39d353" oninput="tbSync('tb4')" />
+                  <input type="text" id="tb4Hex" value="#39d353" spellcheck="false" maxlength="7" oninput="tbSyncHex('tb4')" />
+                  <span>Level 4</span>
+                </div>
+              </div>
+            </div>
+            <div id="builderBoxGroup">
+              <div
+                class="tb-group-label"
                 style="
-                  font-weight: 600;
-                  font-size: 13px;
-                  color: var(--text-primary);
+                  margin-top: 0;
+                  display: flex;
+                  align-items: baseline;
+                  gap: 8px;
+                  flex-wrap: wrap;
                 "
-                >Stats</span
               >
-            </label>
-
-            <label
-              style="
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                cursor: pointer;
-              "
-            >
-              <input
-                type="checkbox"
-                id="builderCredit"
-                style="cursor: pointer"
-              />
-              <span
-                style="
-                  font-weight: 600;
-                  font-size: 13px;
-                  color: var(--text-primary);
-                "
-                >Credit</span
-              >
-            </label>
-          </div>
-        </div>
-
-        <div style="margin-top: 12px">
-          <div style="margin-bottom: 8px">
-            <label
-              style="
-                font-size: 13px;
-                font-weight: 600;
-                color: var(--text-primary);
-                margin-right: 12px;
-              "
-              >Format:</label
-            >
-            <label style="margin-right: 16px; cursor: pointer; font-size: 13px">
-              <input
-                type="radio"
-                name="urlFormat"
-                value="url"
-                checked
-                style="margin-right: 4px; cursor: pointer"
-              />
-              URL
-            </label>
-            <label style="margin-right: 16px; cursor: pointer; font-size: 13px">
-              <input
-                type="radio"
-                name="urlFormat"
-                value="markdown"
-                style="margin-right: 4px; cursor: pointer"
-              />
-              Markdown
-            </label>
-            <label style="cursor: pointer; font-size: 13px">
-              <input
-                type="radio"
-                name="urlFormat"
-                value="html"
-                style="margin-right: 4px; cursor: pointer"
-              />
-              HTML
-            </label>
-          </div>
-          <div style="margin-top: 12px">
-            <button
-              onclick="generatePreview()"
-              style="
-                width: 100%;
-                padding: 10px 16px;
-                background: var(--button-bg);
-                color: white;
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-                font-weight: 600;
-                font-size: 14px;
-                transition: background 0.2s ease;
-              "
-              onmouseover="this.style.background = 'var(--button-hover)'"
-              onmouseout="this.style.background = 'var(--button-bg)'"
-            >
-              Generate Preview
-            </button>
-          </div>
-          <div style="display: flex; gap: 8px; margin-top: 12px">
-            <input
-              type="text"
-              id="generatedUrl"
-              readonly
-              value="https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=<enter-username>"
-              style="
-                flex: 1;
-                padding: 8px 12px;
-                border: 1px solid var(--border-color);
-                border-radius: 6px;
-                font-family: &quot;SFMono-Regular&quot;, Consolas, monospace;
-                font-size: 12px;
-                background: var(--bg-tertiary);
-                color: var(--text-primary);
-              "
-            />
-            <button
-              onclick="copyUrl()"
-              id="copyButton"
-              style="
-                padding: 8px 16px;
-                background: var(--button-bg);
-                color: white;
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-                font-weight: 600;
-                font-size: 13px;
-                white-space: nowrap;
-              "
-            >
-              Copy
-            </button>
-          </div>
-        </div>
-
-        <div style="margin-top: 12px">
-          <div
-            id="previewContainer"
-            style="
-              background: var(--bg-tertiary);
-              border: 2px solid var(--border-color);
-              border-radius: 6px;
-              padding: 12px;
-              text-align: center;
-              min-height: 150px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            "
-          >
-            <div style="color: var(--text-secondary); font-size: 13px">
-              Enter a username to see preview
+                Box and accent
+                <span
+                  id="builderBoxNote"
+                  style="
+                    font-weight: 400;
+                    font-size: 11px;
+                    color: var(--text-secondary);
+                  "
+                  >Enable <strong>Stats overlay</strong> to set these.</span
+                >
+              </div>
+              <div id="builderBoxPickers" class="tb-ramp">
+                <div class="tb-field">
+                  <input type="color" id="tbBg" value="#161b22" oninput="tbSync('tbBg')" />
+                  <input type="text" id="tbBgHex" value="#161b22" spellcheck="false" maxlength="7" oninput="tbSyncHex('tbBg')" />
+                  <span>Background</span>
+                </div>
+                <div class="tb-field">
+                  <input type="color" id="tbBorder" value="#39d353" oninput="tbSync('tbBorder')" />
+                  <input type="text" id="tbBorderHex" value="#39d353" spellcheck="false" maxlength="7" oninput="tbSyncHex('tbBorder')" />
+                  <span>Border</span>
+                </div>
+                <div class="tb-field">
+                  <input type="color" id="tbAccent" value="#39d353" oninput="tbSync('tbAccent')" />
+                  <input type="text" id="tbAccentHex" value="#39d353" spellcheck="false" maxlength="7" oninput="tbSyncHex('tbAccent')" />
+                  <span>Accent</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+        </section>
+
+        <section class="fb-section">
+          <div class="fb-title">
+            <span class="fb-step">3</span>Size and range
+          </div>
+          <div class="fb-grid">
+            <div>
+              <label class="fb-label" for="builderYear">Year</label>
+              <input
+                type="number"
+                id="builderYear"
+                class="fb-input"
+                placeholder="2025"
+                min="2008"
+                max="2030"
+              />
+            </div>
+            <div>
+              <label class="fb-label" for="builderWidth">Width (px)</label>
+              <input
+                type="number"
+                id="builderWidth"
+                class="fb-input"
+                placeholder="1000"
+                min="400"
+                max="3000"
+              />
+            </div>
+            <div>
+              <label class="fb-label" for="builderHeight">Height (px)</label>
+              <input
+                type="number"
+                id="builderHeight"
+                class="fb-input"
+                placeholder="600"
+                min="300"
+                max="2000"
+              />
+            </div>
+          </div>
+          <p class="fb-hint">Leave Year blank for a rolling 365-day window.</p>
+          <div class="fb-toggles">
+            <label class="fb-check">
+              <input type="checkbox" id="builderStats" onchange="toggleBoxGroup()" />
+              Stats overlay
+            </label>
+            <label class="fb-check">
+              <input type="checkbox" id="builderCredit" /> Username credit
+            </label>
+          </div>
+        </section>
+
+        <section class="fb-section">
+          <div class="fb-title">
+            <span class="fb-step">4</span>Get the code
+          </div>
+          <div class="fb-format">
+            <span
+              style="
+                font-weight: 600;
+                font-size: 13px;
+                color: var(--text-primary);
+              "
+              >Format</span
+            >
+            <label class="fb-radio">
+              <input type="radio" name="urlFormat" value="url" checked /> URL
+            </label>
+            <label class="fb-radio">
+              <input type="radio" name="urlFormat" value="markdown" /> Markdown
+            </label>
+            <label class="fb-radio">
+              <input type="radio" name="urlFormat" value="html" /> HTML
+            </label>
+          </div>
+          <div class="fb-out-row">
+            <input
+              type="text"
+              id="generatedUrl"
+              class="fb-url"
+              readonly
+              value="https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=<enter-username>"
+            />
+            <button class="fb-btn" id="copyButton" onclick="copyUrl()">
+              Copy
+            </button>
+          </div>
+          <button
+            class="fb-btn fb-btn-block"
+            onclick="generatePreview()"
+          >
+            Generate Preview
+          </button>
+          <div class="fb-preview" id="previewContainer">
+            <div style="color: var(--text-secondary); font-size: 13px">
+              Enter a username to see the preview
+            </div>
+          </div>
+        </section>
       </div>
     </div>
 
@@ -971,6 +1121,84 @@
             />
           </td>
           <td><code>/api/graph?username=spectrewolf8&amp;theme=ocean</code></td>
+        </tr>
+        <tr>
+          <td><strong>Catppuccin</strong></td>
+          <td>
+            <img
+              src="/media/examples/output-catppuccin.png"
+              alt="Catppuccin Theme"
+              style="max-width: 200px; border: 1px solid #ddd"
+            />
+          </td>
+          <td>
+            <code>/api/graph?username=spectrewolf8&amp;theme=catppuccin</code>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Dracula</strong></td>
+          <td>
+            <img
+              src="/media/examples/output-dracula.png"
+              alt="Dracula Theme"
+              style="max-width: 200px; border: 1px solid #ddd"
+            />
+          </td>
+          <td>
+            <code>/api/graph?username=spectrewolf8&amp;theme=dracula</code>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Crimson</strong></td>
+          <td>
+            <img
+              src="/media/examples/output-crimson.png"
+              alt="Crimson Theme"
+              style="max-width: 200px; border: 1px solid #ddd"
+            />
+          </td>
+          <td>
+            <code>/api/graph?username=spectrewolf8&amp;theme=crimson</code>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Tokyo Night</strong></td>
+          <td>
+            <img
+              src="/media/examples/output-tokyonight.png"
+              alt="Tokyo Night Theme"
+              style="max-width: 200px; border: 1px solid #ddd"
+            />
+          </td>
+          <td>
+            <code>/api/graph?username=spectrewolf8&amp;theme=tokyonight</code>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Sunset</strong></td>
+          <td>
+            <img
+              src="/media/examples/output-sunset.png"
+              alt="Sunset Theme"
+              style="max-width: 200px; border: 1px solid #ddd"
+            />
+          </td>
+          <td>
+            <code>/api/graph?username=spectrewolf8&amp;theme=sunset</code>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Sakura</strong></td>
+          <td>
+            <img
+              src="/media/examples/output-sakura.png"
+              alt="Sakura Theme"
+              style="max-width: 200px; border: 1px solid #ddd"
+            />
+          </td>
+          <td>
+            <code>/api/graph?username=spectrewolf8&amp;theme=sakura</code>
+          </td>
         </tr>
         <tr>
           <td>
@@ -1627,7 +1855,7 @@
         if (year) params.append("year", year);
         if (width) params.append("width", width);
         if (height) params.append("height", height);
-        if (theme !== "github") params.append("theme", theme);
+        builderAppendTheme(params);
         if (stats) params.append("stats", "true");
         if (credit) params.append("credit", "true");
 
@@ -1671,7 +1899,7 @@
         if (year) params.append("year", year);
         if (width) params.append("width", width);
         if (height) params.append("height", height);
-        if (theme !== "github") params.append("theme", theme);
+        builderAppendTheme(params);
         if (stats) params.append("stats", "true");
         if (credit) params.append("credit", "true");
 
@@ -2330,6 +2558,87 @@
       }
 
       buildTableOfContents();
+
+      // Custom theme panel (fused into the URL builder): show the color
+      // pickers only when the Custom theme is selected.
+      function toggleCustomPanel() {
+        const isCustom =
+          document.getElementById("builderTheme").value === "custom";
+        document.getElementById("builderCustomPanel").style.display = isCustom
+          ? "block"
+          : "none";
+        toggleBoxGroup();
+      }
+      // Box/border/accent only affect the stats overlay. When Stats is off,
+      // keep the pickers visible but blurred/disabled with a note, so users see
+      // the option exists and know how to enable it.
+      function toggleBoxGroup() {
+        const on = document.getElementById("builderStats").checked;
+        const pickers = document.getElementById("builderBoxPickers");
+        const note = document.getElementById("builderBoxNote");
+        if (pickers) {
+          pickers.classList.toggle("fb-disabled", !on);
+          pickers
+            .querySelectorAll("input")
+            .forEach((i) => (i.disabled = !on));
+        }
+        if (note) note.hidden = on;
+        generateUrl();
+      }
+      // Two-way sync between each color swatch and its hex text box.
+      // Swatch changed -> mirror into the text box.
+      function tbSync(id) {
+        const swatch = document.getElementById(id);
+        const hex = document.getElementById(id + "Hex");
+        hex.value = swatch.value;
+        hex.classList.remove("tb-hex-invalid");
+        generateUrl();
+      }
+      // Hex text changed -> validate and, if valid, drive the swatch.
+      function tbSyncHex(id) {
+        const hex = document.getElementById(id + "Hex");
+        const swatch = document.getElementById(id);
+        let s = hex.value.trim().replace(/^#/, "");
+        if (/^[0-9a-fA-F]{3}$/.test(s)) {
+          s = s
+            .split("")
+            .map((c) => c + c)
+            .join("");
+        }
+        if (/^[0-9a-fA-F]{6}$/.test(s)) {
+          hex.classList.remove("tb-hex-invalid");
+          swatch.value = "#" + s.toLowerCase();
+          generateUrl();
+        } else {
+          // keep what they're typing, flag it, and don't push a bad value
+          hex.classList.add("tb-hex-invalid");
+        }
+      }
+
+      // Append the theme params. For a preset, just the name; for Custom, the
+      // picked colors as theme=custom&colors=...&bg=...&border=...&accent=...
+      function builderAppendTheme(params) {
+        const theme = document.getElementById("builderTheme").value;
+        if (theme === "custom") {
+          const hex = (id) =>
+            document.getElementById(id).value.replace("#", "");
+          params.append("theme", "custom");
+          params.append(
+            "colors",
+            ["tb0", "tb1", "tb2", "tb3", "tb4"].map(hex).join(","),
+          );
+          // Box/border/accent style only the stats overlay, so only include
+          // them when Stats overlay is on (otherwise they have no effect).
+          if (document.getElementById("builderStats").checked) {
+            params.append("bg", hex("tbBg"));
+            params.append("border", hex("tbBorder"));
+            params.append("accent", hex("tbAccent"));
+          }
+        } else if (theme !== "github") {
+          params.append("theme", theme);
+        }
+      }
+      toggleCustomPanel();
 
       // Fetch the repo's GitHub star count and show it in the Source section.
       // Public, CORS-enabled endpoint; on any failure (offline, rate limit)
