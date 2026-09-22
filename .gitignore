@@ -19,3 +19,6 @@ error-screenshot.png
 
 # Local MCP server config (may contain project refs; managed by the app)
 .mcp.json
+
+# Local-only load test reports and harness
+benchmarks/
