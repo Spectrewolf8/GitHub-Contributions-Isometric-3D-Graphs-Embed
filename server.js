@@ -18,6 +18,7 @@ import { createClient } from "@supabase/supabase-js";
 import {
   fetchContributions,
   parseContributionsData,
+  fetchContributionSummary,
 } from "./src/api-client.js";
 import {
   renderIsometricChart,
@@ -234,20 +235,13 @@ async function generateGraph(params) {
     ? renderWithStats(days, renderOptions)
     : renderIsometricChart(days, renderOptions);
 
-  // Export to PNG buffer
+  // Export to PNG buffer.
+  // Completeness is validated in fetchContributions(), which throws on
+  // persistently incomplete data, so anything that reaches here is safe to
+  // return and cache.
   const buffer = exportToPNG(canvas);
 
-  // Warn if data seems incomplete (likely due to API partial failure).
-  // For 365-day mode we expect ~365 days; flag if we got less than 180.
-  // This result is still returned but the caller can skip caching it.
-  const isLikelyIncomplete = use365Days && days.length < 180;
-  if (isLikelyIncomplete) {
-    console.warn(
-      `[WARN]  ${username} — only ${days.length}/365 days returned, skipping cache`,
-    );
-  }
-
-  return { buffer, isLikelyIncomplete };
+  return buffer;
 }
 
 /**
@@ -257,10 +251,15 @@ async function generateGraph(params) {
  * @param {boolean} fromCache
  */
 function sendPNGResponse(res, imageBuffer, fromCache = false) {
+  // No client-side caching: browsers and GitHub's camo image proxy must fetch
+  // a fresh image every time so README graphs never show stale data. Freshness
+  // is handled server-side by the Supabase daily cache, not by the client.
   const headers = {
     "Content-Type": "image/png",
     "Content-Length": imageBuffer.length,
-    "Cache-Control": "public, max-age=3600, must-revalidate", // 1 hour with revalidation
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    Pragma: "no-cache",
+    Expires: "0",
     "X-Cache": fromCache ? "HIT" : "MISS",
   };
 
@@ -346,30 +345,24 @@ async function handleRequest(req, res) {
         return sendPNGResponse(res, cachedImage, true);
       }
 
-      // Generate new graph
+      // Generate new graph. fetchContributions() throws on persistently
+      // incomplete data, so a returned buffer is always complete data.
       console.log(`[MISS]  ${username} — generating new graph`);
-      const { buffer: imageBuffer, isLikelyIncomplete } =
-        await generateGraph(params);
+      const imageBuffer = await generateGraph(params);
 
       // Track analytics (don't wait)
       trackAnalytics(params, false).catch((err) =>
         console.error("Analytics error:", err),
       );
 
-      // Only cache complete graphs — skip caching if data seems partial
-      // to prevent a broken image from being served all day from cache.
-      if (!isLikelyIncomplete) {
-        cacheImage(cacheKey, imageBuffer)
-          .then(() =>
-            console.log(`[SAVE]  ${params.username} — cached to Supabase`),
-          )
-          .catch((err) =>
-            console.error(
-              `[ERROR] ${params.username} — cache save failed:`,
-              err,
-            ),
-          );
-      }
+      // Data is validated complete, so it's safe to cache.
+      cacheImage(cacheKey, imageBuffer)
+        .then(() =>
+          console.log(`[SAVE]  ${params.username} — cached to Supabase`),
+        )
+        .catch((err) =>
+          console.error(`[ERROR] ${params.username} — cache save failed:`, err),
+        );
 
       // Send response
       return sendPNGResponse(res, imageBuffer, false);
@@ -378,6 +371,55 @@ async function handleRequest(req, res) {
         error.message.includes("Could not resolve to a User") ||
         error.message.includes("not found");
       const statusCode = isNotFound ? 404 : 500;
+      console.error(`[ERROR] ${statusCode} — ${error.message}`);
+      return sendErrorResponse(res, statusCode, error.message);
+    }
+  }
+
+  // Contribution summary for the docs' "Check my graph" tool. Reports what
+  // GitHub counts for this user over the default 365-day window and how much
+  // of it is private activity counted anonymously, i.e. exactly what the
+  // public profile shows. GitHub doesn't report contributions hidden by an
+  // organization's token policy, so this can explain a gap but not detect one.
+  if (url.pathname === "/api/status") {
+    const username = new URLSearchParams(url.search).get("username") || "";
+    if (!username) {
+      return sendErrorResponse(
+        res,
+        400,
+        "Missing required parameter: username",
+      );
+    }
+
+    try {
+      const summary = await fetchContributionSummary(username);
+      const fmt = (n) => n.toLocaleString();
+      const privateNote =
+        summary.restricted > 0
+          ? `${fmt(summary.restricted)} of them are private contributions, counted anonymously because you display private contributions on your profile.`
+          : "None are private. Either you have no private contributions in this window, or you don't display them on your profile (in which case your public profile hides them too).";
+      const note =
+        `${fmt(summary.total)} contributions counted from ${summary.from} to ${summary.to}. ${privateNote} ` +
+        "This should match the number on your GitHub profile. If the graph shows less, an organization you contribute to is most likely restricting this service's token.";
+
+      const body = JSON.stringify({
+        username,
+        from: summary.from,
+        to: summary.to,
+        total_contributions: summary.total,
+        public_contributions: summary.public,
+        private_contributions: summary.restricted,
+        note,
+      });
+
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, max-age=300", // 5 minutes cache
+        "Access-Control-Allow-Origin": "*",
+      });
+      return res.end(body);
+    } catch (error) {
+      const statusCode = error.message.includes("not found") ? 404 : 500;
       console.error(`[ERROR] ${statusCode} — ${error.message}`);
       return sendErrorResponse(res, statusCode, error.message);
     }
@@ -482,6 +524,18 @@ async function verifyGitHubAPI() {
 
     const login = json?.data?.viewer?.login ?? "unknown";
     console.log(`[GH]    GitHub authenticated as @${login}\n`);
+
+    // Fine-grained tokens are subject to per-organization policies (lifetime
+    // caps, approval) that silently hide that org's contributions, even in
+    // public repos, for every user who contributes there. A classic token
+    // (no scopes needed for public data) isn't affected. Warn here so an
+    // operator finds out at startup, not from under-counted graphs.
+    if (token.startsWith("github_pat_")) {
+      console.warn(
+        "[WARN]  GITHUB_TOKEN is a fine-grained PAT. Organization token policies can\n" +
+          "        hide contributions from graphs. Prefer a classic token (no scopes needed).\n",
+      );
+    }
   } catch (err) {
     console.error(`[ERROR] GitHub API check failed: ${err.message}\n`);
   }
