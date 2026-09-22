@@ -11,7 +11,7 @@
     <link rel="icon" href="/media/assets/icon-128.png" sizes="128x128" />
 
     <!-- Open Graph / Social Preview -->
-    <meta property="og:title" content="Isometric Contributions API" />
+    <meta property="og:title" content="GitHub Contributions Isometric 3D Graphs" />
     <meta
       property="og:description"
       content="Generate beautiful 3D isometric visualizations of GitHub contribution graphs."
@@ -30,14 +30,14 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@Spectrewolf8" />
-    <meta name="twitter:title" content="Isometric Contributions API" />
+    <meta name="twitter:title" content="GitHub Contributions Isometric 3D Graphs" />
     <meta
       name="twitter:description"
       content="Generate beautiful 3D isometric visualizations of GitHub contribution graphs."
     />
     <meta name="twitter:image" content="/media/examples/output-github.png" />
 
-    <title>Isometric Contributions API</title>
+    <title>GitHub Contributions Isometric 3D Graphs</title>
     <style>
       :root {
         --bg-primary: #ffffff;
@@ -195,6 +195,120 @@
         color: var(--link-color);
       }
 
+      /* Right-side table of contents (scroll-spy nav) */
+      html {
+        scroll-behavior: smooth;
+      }
+      h2 {
+        scroll-margin-top: 24px;
+      }
+      .toc {
+        position: fixed;
+        top: 90px;
+        left: calc(50% + 500px);
+        width: 210px;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+        font-size: 13px;
+        z-index: 900;
+      }
+      .toc-title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+      }
+      .toc a {
+        display: block;
+        padding: 2px 0;
+        color: var(--text-secondary);
+        text-decoration: none;
+        line-height: 1.3;
+        white-space: nowrap;
+        transition:
+          color 0.15s ease,
+          font-size 0.15s ease;
+      }
+      .toc a:hover {
+        color: var(--text-primary);
+      }
+      .toc a.active {
+        color: var(--heading-primary);
+        font-weight: 700;
+        font-size: 15px;
+      }
+      /* Source section: icon + text + prominent "Star" call to action */
+      .source-block {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin: 16px 0;
+      }
+      .source-block > img {
+        flex: none;
+      }
+      .source-text {
+        flex: 1 1 auto;
+        min-width: 0; /* let the long repo link wrap instead of overflowing */
+      }
+      .source-text p {
+        margin: 0 0 2px;
+      }
+      .source-link {
+        word-break: break-word;
+      }
+      .repo-stars {
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+        transition:
+          border-color 0.15s ease,
+          background 0.15s ease;
+      }
+      .repo-stars:hover {
+        border-color: var(--heading-primary);
+        background: var(--bg-tertiary);
+      }
+      .repo-stars svg {
+        width: 16px;
+        height: 16px;
+        fill: #e3b341;
+      }
+      .repo-stars-count {
+        padding-left: 8px;
+        margin-left: 1px;
+        border-left: 1px solid var(--border-color);
+        color: var(--text-secondary);
+      }
+      @media (max-width: 560px) {
+        .source-block {
+          flex-wrap: wrap;
+        }
+        .source-text {
+          flex-basis: 100%;
+        }
+      }
+
+      /* Hide the floating TOC when there isn't room beside the centered body */
+      @media (max-width: 1439px) {
+        .toc {
+          display: none;
+        }
+      }
+
       /* "Check my graph": the result box mirrors the URL builder's preview box */
       .status-result {
         margin-top: 12px;
@@ -316,7 +430,7 @@
             margin-right: 12px;
           "
         />
-        Isometric Contributions API
+        GitHub Contributions Isometric 3D Graphs
       </h1>
       <p
         style="font-size: 1.2em; color: var(--text-secondary); margin-bottom: 0"
@@ -1326,23 +1440,40 @@
     </div>
 
     <h2>Source</h2>
-    <p style="display: flex; align-items: center; gap: 12px">
+    <div class="source-block">
       <img
         src="https://www.readmecodegen.com/api/social-icon?name=github&size=96"
         alt="GitHub"
         width="48"
         height="48"
       />
-      <span>
-        Explore the project or report issues on GitHub:
+      <div class="source-text">
+        <p>Explore the project, report issues, or star it if you find it useful:</p>
         <a
-          href="https://github.com/Spectrewolf8/isometric-contributions"
+          class="source-link"
+          href="https://github.com/Spectrewolf8/GitHub-Contributions-Isometric-3D-Graphs-Embed"
           target="_blank"
           rel="noopener noreferrer"
-          >github.com/Spectrewolf8/isometric-contributions</a
+          >github.com/Spectrewolf8/GitHub-Contributions-Isometric-3D-Graphs-Embed</a
         >
-      </span>
-    </p>
+      </div>
+      <a
+        id="repoStars"
+        class="repo-stars"
+        href="https://github.com/Spectrewolf8/GitHub-Contributions-Isometric-3D-Graphs-Embed/stargazers"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Star this repo on GitHub"
+      >
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path
+            d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"
+          />
+        </svg>
+        <span>Star</span>
+        <span class="repo-stars-count" id="repoStarCount" hidden></span>
+      </a>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
@@ -2120,6 +2251,106 @@
           console.error("Error loading analytics:", error);
         }
       }
+
+      // Build the right-side table of contents from the page's h2 sections,
+      // assigning slug ids where missing, then keep the active item in sync
+      // with the scroll position (scroll-spy).
+      function buildTableOfContents() {
+        const headings = Array.from(document.querySelectorAll("h2"));
+        if (headings.length === 0) return;
+
+        const slugify = (s) =>
+          s
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "");
+
+        const nav = document.createElement("nav");
+        nav.className = "toc";
+        nav.setAttribute("aria-label", "Table of contents");
+        const title = document.createElement("div");
+        title.className = "toc-title";
+        title.textContent = "On this page";
+        nav.appendChild(title);
+
+        const linkById = {};
+        headings.forEach((h) => {
+          // Use only the heading's own text, excluding nested toggle spans
+          // like "[Hide] Click to collapse" on the collapsible sections.
+          let label = "";
+          h.childNodes.forEach((n) => {
+            if (n.nodeType === Node.TEXT_NODE) label += n.textContent;
+          });
+          label = label.trim();
+          if (!label) return;
+          if (!h.id) h.id = slugify(label);
+
+          const a = document.createElement("a");
+          a.href = "#" + h.id;
+          a.textContent = label;
+          a.dataset.target = h.id;
+          nav.appendChild(a);
+          linkById[h.id] = a;
+        });
+
+        document.body.appendChild(nav);
+
+        const setActive = (id) => {
+          Object.values(linkById).forEach((a) =>
+            a.classList.toggle("active", a.dataset.target === id),
+          );
+        };
+
+        const spy = () => {
+          // Active section = the last heading scrolled above a reading line set
+          // at ~30% of the viewport height. Using a fraction rather than a
+          // fixed pixel offset lets short sections near the end of the page
+          // (which can never reach the very top) still cross the line and get
+          // highlighted, instead of being skipped.
+          const line = window.innerHeight * 0.3;
+          let idx = 0;
+          for (let i = 0; i < headings.length; i++) {
+            if (headings[i].getBoundingClientRect().top <= line) idx = i;
+            else break;
+          }
+          // In the last few pixels, snap to the final section so hitting the
+          // absolute bottom always highlights the last entry.
+          const max =
+            document.documentElement.scrollHeight - window.innerHeight;
+          if (max - window.scrollY <= 6) idx = headings.length - 1;
+          setActive(headings[idx].id);
+        };
+
+        // spy() is cheap (a dozen getBoundingClientRect calls), so run it
+        // directly on scroll. A requestAnimationFrame throttle would stall in
+        // a background tab where rAF is paused, leaving the highlight stuck.
+        window.addEventListener("scroll", spy, { passive: true });
+        window.addEventListener("resize", spy);
+        spy();
+      }
+
+      buildTableOfContents();
+
+      // Fetch the repo's GitHub star count and show it in the Source section.
+      // Public, CORS-enabled endpoint; on any failure (offline, rate limit)
+      // the chip simply stays hidden and the link remains.
+      async function loadRepoStars() {
+        const REPO = "Spectrewolf8/GitHub-Contributions-Isometric-3D-Graphs-Embed";
+        try {
+          const res = await fetch(`https://api.github.com/repos/${REPO}`, {
+            headers: { Accept: "application/vnd.github+json" },
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          if (typeof data.stargazers_count !== "number") return;
+          const count = document.getElementById("repoStarCount");
+          count.textContent = data.stargazers_count.toLocaleString();
+          count.hidden = false; // reveal the count; the Star button always shows
+        } catch (err) {
+          // leave the chip hidden
+        }
+      }
+      loadRepoStars();
 
       // Load analytics on page load
       loadAnalytics();
