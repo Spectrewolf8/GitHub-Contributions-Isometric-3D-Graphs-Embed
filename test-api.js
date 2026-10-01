@@ -22,27 +22,27 @@ const tests = [
   {
     name: "Basic Graph",
     url: `${BASE_URL}/api/graph?username=spectrewolf8`,
-    expectPNG: true,
+    expectSVG: true,
   },
   {
     name: "Graph with Stats",
     url: `${BASE_URL}/api/graph?username=spectrewolf8&stats=true`,
-    expectPNG: true,
+    expectSVG: true,
   },
   {
     name: "Graph with Year Parameter",
     url: `${BASE_URL}/api/graph?username=spectrewolf8&year=2025`,
-    expectPNG: true,
+    expectSVG: true,
   },
   {
     name: "Graph with Credit",
     url: `${BASE_URL}/api/graph?username=spectrewolf8&credit=true`,
-    expectPNG: true,
+    expectSVG: true,
   },
   {
-    name: "SVG Graph with Stats",
-    url: `${BASE_URL}/api/graph?username=spectrewolf8&stats=true&format=svg`,
-    expectSVG: true,
+    name: "PNG Graph with Stats",
+    url: `${BASE_URL}/api/graph?username=spectrewolf8&stats=true&format=png`,
+    expectPNG: true,
   },
   {
     name: "Missing Username",
@@ -52,7 +52,7 @@ const tests = [
   {
     name: "Cache Hit (Second Request)",
     url: `${BASE_URL}/api/graph?username=spectrewolf8`,
-    expectPNG: true,
+    expectSVG: true,
     expectCacheHit: true,
   },
 ];

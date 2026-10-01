@@ -6,7 +6,7 @@
  * - Daily caching per username (one generation per day) using Supabase Storage
  * - Multiple fetches served from cache
  * - Customizable query parameters for themes, dimensions, stats
- * - PNG or SVG image output (format=svg)
+ * - SVG image output by default, PNG with format=png
  */
 
 import "dotenv/config";
@@ -90,7 +90,7 @@ function getCacheKey(username, params) {
   // the hash segment would still differ by case.
   const normalizedUsername = (username || "").toLowerCase();
   // The format is carried by the file extension and left out of the hash, so
-  // PNG keys stay the same as before SVG support existed.
+  // the PNG and SVG of the same graph share a hash.
   const { format, ...rest } = params;
   const paramsStr = JSON.stringify({ ...rest, username: normalizedUsername });
   const hash = Buffer.from(paramsStr).toString("base64").replace(/[/+=]/g, "");
@@ -218,7 +218,8 @@ function parseQueryParams(search) {
     border: params.get("border") || null,
     accent: params.get("accent") || null,
     labelColor: params.get("label") || null,
-    format: (params.get("format") || "").toLowerCase() === "svg" ? "svg" : "png",
+    // SVG unless PNG is asked for explicitly
+    format: (params.get("format") || "").toLowerCase() === "png" ? "png" : "svg",
   };
 }
 

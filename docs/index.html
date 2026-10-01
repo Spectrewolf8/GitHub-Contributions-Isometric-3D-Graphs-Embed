@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Generate beautiful 3D isometric visualizations of GitHub contribution graphs as PNG or SVG — API, CLI, themes, caching, and analytics."
+      content="Generate beautiful 3D isometric visualizations of GitHub contribution graphs as SVG or PNG — API, CLI, themes, caching, and analytics."
     />
     <meta name="theme-color" content="#0969da" />
     <link rel="icon" href="/media/assets/icon-128.png" sizes="128x128" />
@@ -826,9 +826,8 @@
     <h2>Endpoint</h2>
     <pre>GET /api/graph</pre>
     <p>
-      Returns a PNG by default. Add <code>format=svg</code> for an SVG, which is
-      recommended for embeds: it stays sharp at any size and is smaller over
-      the wire.
+      Returns an SVG by default: it stays sharp at any size and is smaller
+      over the wire. Add <code>format=png</code> for a PNG.
     </p>
 
     <h2>Query Parameters</h2>
@@ -893,11 +892,10 @@
           <td><code>format</code></td>
           <td>string</td>
           <td>Optional</td>
-          <td>png</td>
+          <td>svg</td>
           <td>
-            Image format: <code>png</code> or <code>svg</code>. SVG is
-            recommended: it stays sharp at any display size and is smaller
-            over the wire
+            Image format: <code>svg</code> or <code>png</code>. SVG stays
+            sharp at any display size and is smaller over the wire
           </td>
         </tr>
         <tr>
@@ -1132,7 +1130,7 @@
             >
             <label class="fb-radio">
               <input type="radio" name="imageFormat" value="svg" checked /> SVG
-              (recommended)
+              (default)
             </label>
             <label class="fb-radio">
               <input type="radio" name="imageFormat" value="png" /> PNG
@@ -1163,7 +1161,7 @@
               id="generatedUrl"
               class="fb-url"
               readonly
-              value="https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=<enter-username>&format=svg"
+              value="https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=<enter-username>"
             />
             <button class="fb-btn" id="copyButton" onclick="copyUrl()">
               Copy
@@ -1279,14 +1277,14 @@
     </div>
 
     <div class="example">
-      <h3>As SVG (recommended):</h3>
-      <pre>/api/graph?username=spectrewolf8&amp;stats=true&amp;format=svg</pre>
+      <h3>As PNG:</h3>
+      <pre>/api/graph?username=spectrewolf8&amp;stats=true&amp;format=png</pre>
     </div>
 
     <div class="example">
       <h3>Full customization:</h3>
       <pre>
-/api/graph?username=spectrewolf8&amp;year=2025&amp;width=1200&amp;height=700&amp;stats=true&amp;credit=true&amp;theme=neon&amp;format=svg</pre
+/api/graph?username=spectrewolf8&amp;year=2025&amp;width=1200&amp;height=700&amp;stats=true&amp;credit=true&amp;theme=neon</pre
       >
     </div>
 
@@ -1301,9 +1299,8 @@
     <h2>Response Headers</h2>
     <ul>
       <li>
-        <code>Content-Type: image/png</code>, or
-        <code>image/svg+xml</code> with <code>format=svg</code> (gzipped when
-        the client accepts it)
+        <code>Content-Type: image/svg+xml</code> (gzipped when the client
+        accepts it), or <code>image/png</code> with <code>format=png</code>
       </li>
       <li>
         <code>Cache-Control: no-store, no-cache, must-revalidate, max-age=0</code>
@@ -1970,12 +1967,12 @@
         `;
       }
 
-      // PNG is the API default, so only SVG needs the parameter
+      // SVG is the API default, so only PNG needs the parameter
       function builderAppendImageFormat(params) {
         const imageFormat =
           document.querySelector('input[name="imageFormat"]:checked')?.value ||
           "svg";
-        if (imageFormat === "svg") params.append("format", "svg");
+        if (imageFormat === "png") params.append("format", "png");
       }
 
       function copyUrl() {

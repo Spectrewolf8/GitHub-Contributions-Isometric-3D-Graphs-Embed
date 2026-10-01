@@ -1,6 +1,6 @@
 # <img src="media/assets/icon-128.png" alt="logo" width="40" height="40" style="vertical-align: middle;"> Isometric 3D Contributions Graphs
 
-Generate beautiful 3D isometric visualizations of GitHub contribution graphs, as PNG or SVG. Available as both a CLI tool and a fast, cached API server.
+Generate beautiful 3D isometric visualizations of GitHub contribution graphs, as SVG or PNG. Available as both a CLI tool and a fast, cached API server.
 
 ## Examples
 
@@ -92,7 +92,7 @@ Generate beautiful 3D isometric visualizations of GitHub contribution graphs, as
 - 🖌️ **Custom Themes**: design your own colors via the API or the in-page theme builder
 - 📊 **Statistics Overlay**: Contributions, streaks, averages
 - 🖼️ **Customizable**: Dimensions, year selection, credits, themes
-- 📐 **PNG or SVG**: SVG (`format=svg`, recommended) stays sharp at any size and is smaller over the wire; PNG is the default
+- 📐 **SVG or PNG**: SVG by default, sharp at any size and smaller over the wire; add `format=png` for a PNG
 - 🚀 **Minimal**: Lightweight with no framework overhead
 - 💾 **Smart Caching**: Efficient daily caching with instant updates
 - 📅 **365-Day Rolling Window**: Default view showing last 365 days of activity
@@ -134,13 +134,13 @@ npm run generate -- <username> [year] [output] [options]
 npm run generate -- spectrewolf8
 
 # Specific year with stats
-npm run generate -- spectrewolf8 2025 graph.png --stats --credit
+npm run generate -- spectrewolf8 2025 graph.svg --stats --credit
 
 # Custom dimensions
-npm run generate -- spectrewolf8 2025 graph.png --width 1920 --height 1080
+npm run generate -- spectrewolf8 2025 graph.svg --width 1920 --height 1080
 
-# SVG output (any .svg output name, or --svg)
-npm run generate -- spectrewolf8 2025 graph.svg --stats
+# PNG output (any .png output name, or --png)
+npm run generate -- spectrewolf8 2025 graph.png --stats
 ```
 
 **CLI Options:**
@@ -149,7 +149,7 @@ npm run generate -- spectrewolf8 2025 graph.svg --stats
 - `--credit` - Show username in bottom right
 - `--width <px>` - Canvas width (default: 1000)
 - `--height <px>` - Canvas height (default: 600)
-- `--svg` - Write an SVG instead of a PNG (chosen automatically for a `.svg` output name)
+- `--png` - Write a PNG instead of an SVG (chosen automatically for a `.png` output name)
 
 ### API Server
 
@@ -175,7 +175,7 @@ Server runs on port 3000 (configurable via `PORT` environment variable).
 GET /api/graph
 ```
 
-Returns a PNG by default. Add `format=svg` for an SVG (recommended for embeds).
+Returns an SVG by default. Add `format=png` for a PNG.
 
 ### Query Parameters
 
@@ -192,7 +192,7 @@ Returns a PNG by default. Add `format=svg` for an SVG (recommended for embeds).
 | `height`   | number        | No       | `600`             | Image height in pixels                                                          |
 | `stats`    | boolean       | No       | `false`           | Include statistics overlay                                                      |
 | `credit`   | boolean       | No       | `false`           | Show username credit                                                            |
-| `format`   | string        | No       | `png`             | Image format: `png` or `svg`. SVG is recommended: it stays sharp at any display size and is smaller over the wire |
+| `format`   | string        | No       | `svg`             | Image format: `svg` or `png`. SVG stays sharp at any display size and is smaller over the wire |
 
 ### API Examples
 
@@ -232,16 +232,16 @@ https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spe
 https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&credit=true
 ```
 
-**As SVG (recommended):**
+**As PNG:**
 
 ```
-https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&stats=true&format=svg
+https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&stats=true&format=png
 ```
 
 **Full Customization:**
 
 ```
-https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&year=2025&width=1200&height=700&stats=true&credit=true&theme=neon&format=svg
+https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&year=2025&width=1200&height=700&stats=true&credit=true&theme=neon
 ```
 
 > **Note:** Use `http://localhost:3000` for local testing.
@@ -257,7 +257,7 @@ https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spe
 The stats box can be styled too, but only when the overlay is on (`stats=true`): `bg` sets the box background, `border` the box border, and `accent` the title/value text. Anything you leave out is derived automatically (text color is chosen for legibility against `bg`):
 
 ```
-https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&theme=custom&colors=0d1117,3a1078,4e31aa,3795bd,aad7d9&bg=0d1117&border=aad7d9&accent=aad7d9&stats=true&format=svg
+https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&theme=custom&colors=0d1117,3a1078,4e31aa,3795bd,aad7d9&bg=0d1117&border=aad7d9&accent=aad7d9&stats=true
 ```
 
 The easiest way to build one is the **URL and Theme Builder** on the [live docs page](https://isometric-contributions-spectrewolf8.onrender.com/): pick <b>Custom</b> in the theme dropdown, choose your colors with the pickers (or paste hex values), and copy the generated URL.
@@ -274,7 +274,7 @@ The API implements intelligent daily caching:
 **Cache Response Headers:**
 
 ```
-Content-Type: image/png | image/svg+xml; charset=utf-8
+Content-Type: image/svg+xml; charset=utf-8 | image/png
 Content-Length: <bytes>
 Cache-Control: no-store, no-cache, must-revalidate, max-age=0
 Pragma: no-cache
@@ -282,7 +282,7 @@ Expires: 0
 X-Cache: HIT | MISS
 ```
 
-With `format=svg` the content type is `image/svg+xml; charset=utf-8`, and the body is gzipped (`Content-Encoding: gzip`) when the client accepts it.
+SVG (the default) is gzipped (`Content-Encoding: gzip`) when the client accepts it. With `format=png` the content type is `image/png`.
 
 ### Additional Endpoints
 
@@ -428,25 +428,25 @@ setTheme(
 
 ## Embedding in README
 
-SVG is recommended for embeds: it stays sharp at any size. Leave out `format=svg` to get a PNG.
+Graphs are SVG by default, so they stay sharp at any size. Add `format=png` if you need a PNG.
 
 ### Markdown
 
 ```markdown
-![GitHub Contributions](https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&stats=true&format=svg)
+![GitHub Contributions](https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&stats=true)
 ```
 
 **With theme:**
 
 ```markdown
-![GitHub Contributions](https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&theme=dark&stats=true&format=svg)
+![GitHub Contributions](https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&theme=dark&stats=true)
 ```
 
 ### HTML
 
 ```html
 <img
-  src="https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&theme=neon&stats=true&format=svg"
+  src="https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&theme=neon&stats=true"
   alt="GitHub Contributions"
 />
 ```
@@ -465,10 +465,10 @@ SVG is recommended for embeds: it stays sharp at any size. Leave out `format=svg
 
 ## Output
 
-Generates PNG or SVG images with:
+Generates SVG (default) or PNG images with:
 
 - **Resolution**: Customizable (default 1000x600)
-- **Format**: PNG with transparency, or SVG with transparency. SVG text is drawn as Segoe UI outlines, so it looks the same as the PNG on every device
+- **Format**: SVG with transparency, or PNG with transparency. SVG text is drawn as Segoe UI outlines, so it looks the same as the PNG on every device
 - **Size**: ~20-30 KB (varies with dimensions)
 
 ### Statistics Displayed

@@ -2,7 +2,7 @@
 
 /**
  * CLI tool to generate isometric contribution graphs
- * Usage: node generate.js <username> [year] [output] [--stats]
+ * Usage: node generate.js <username> [year] [output] [--stats] [--png]
  */
 
 import "dotenv/config";
@@ -25,7 +25,7 @@ const year =
   args[1] && !args[1].startsWith("--") ? Number.parseInt(args[1], 10) : null;
 const hasStatsFlag = args.includes("--stats");
 const hasCreditFlag = args.includes("--credit");
-const hasSvgFlag = args.includes("--svg");
+const hasPngFlag = args.includes("--png");
 
 // Parse width and height flags
 const widthIndex = args.indexOf("--width");
@@ -44,22 +44,23 @@ let output;
 if (args.length >= 3 && !args[2].startsWith("--")) {
   output = args[2];
 } else {
-  output = `${username}-contributions.${hasSvgFlag ? "svg" : "png"}`;
+  output = `${username}-contributions.${hasPngFlag ? "png" : "svg"}`;
 }
-const asSVG = hasSvgFlag || output.toLowerCase().endsWith(".svg");
+// SVG unless --png is passed or the output name ends in .png
+const asSVG = !hasPngFlag && !output.toLowerCase().endsWith(".png");
 
 if (!username) {
   console.error(
     "Usage: node generate.js <username> [year] [output] [--stats] [--credit] [--width W] [--height H]",
   );
   console.error(
-    "Example: node generate.js spectrewolf8 2025 graph.png --stats --credit --width 1920 --height 1080",
+    "Example: node generate.js spectrewolf8 2025 graph.svg --stats --credit --width 1920 --height 1080",
   );
   console.error("\nOptions:");
   console.error("  --stats          Include statistics overlay on the image");
   console.error("  --credit         Show username in bottom right corner");
   console.error(
-    "  --svg            Write an SVG instead of a PNG (also used for .svg output names)",
+    "  --png            Write a PNG instead of an SVG (also used for .png output names)",
   );
   console.error("  --width <px>     Canvas width in pixels (default: 1000)");
   console.error("  --height <px>    Canvas height in pixels (default: 600)");
