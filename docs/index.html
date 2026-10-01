@@ -837,6 +837,17 @@
           <td>Show username credit (use <code>credit=true</code>)</td>
         </tr>
         <tr>
+          <td><code>format</code></td>
+          <td>string</td>
+          <td>Optional</td>
+          <td>png</td>
+          <td>
+            Image format: <code>png</code> or <code>svg</code>. SVG is
+            recommended: it stays sharp at any display size and is smaller
+            over the wire
+          </td>
+        </tr>
+        <tr>
           <td><code>theme</code></td>
           <td>string</td>
           <td>Optional</td>
@@ -1064,7 +1075,24 @@
                 font-size: 13px;
                 color: var(--text-primary);
               "
-              >Format</span
+              >Image</span
+            >
+            <label class="fb-radio">
+              <input type="radio" name="imageFormat" value="svg" checked /> SVG
+              (recommended)
+            </label>
+            <label class="fb-radio">
+              <input type="radio" name="imageFormat" value="png" /> PNG
+            </label>
+          </div>
+          <div class="fb-format">
+            <span
+              style="
+                font-weight: 600;
+                font-size: 13px;
+                color: var(--text-primary);
+              "
+              >Snippet</span
             >
             <label class="fb-radio">
               <input type="radio" name="urlFormat" value="url" checked /> URL
@@ -1082,7 +1110,7 @@
               id="generatedUrl"
               class="fb-url"
               readonly
-              value="https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=<enter-username>"
+              value="https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=<enter-username>&format=svg"
             />
             <button class="fb-btn" id="copyButton" onclick="copyUrl()">
               Copy
@@ -1108,55 +1136,55 @@
     <div class="theme-grid">
       <div class="theme-card">
         <div class="theme-card-title"><span>GitHub</span><code>?theme=github</code></div>
-        <img src="/media/examples/output-github.png" alt="GitHub Theme" loading="lazy" />
+        <img src="/media/examples/output-github.svg" alt="GitHub Theme" loading="lazy" />
       </div>
       <div class="theme-card">
         <div class="theme-card-title"><span>Dark</span><code>?theme=dark</code></div>
-        <img src="/media/examples/output-dark.png" alt="Dark Theme" loading="lazy" />
+        <img src="/media/examples/output-dark.svg" alt="Dark Theme" loading="lazy" />
       </div>
       <div class="theme-card">
         <div class="theme-card-title"><span>Light</span><code>?theme=light</code></div>
-        <img src="/media/examples/output-light.png" alt="Light Theme" loading="lazy" />
+        <img src="/media/examples/output-light.svg" alt="Light Theme" loading="lazy" />
       </div>
       <div class="theme-card">
         <div class="theme-card-title"><span>Neon</span><code>?theme=neon</code></div>
-        <img src="/media/examples/output-neon.png" alt="Neon Theme" loading="lazy" />
+        <img src="/media/examples/output-neon.svg" alt="Neon Theme" loading="lazy" />
       </div>
       <div class="theme-card">
         <div class="theme-card-title"><span>Minimal</span><code>?theme=minimal</code></div>
-        <img src="/media/examples/output-minimal.png" alt="Minimal Theme" loading="lazy" />
+        <img src="/media/examples/output-minimal.svg" alt="Minimal Theme" loading="lazy" />
       </div>
       <div class="theme-card">
         <div class="theme-card-title"><span>Ocean</span><code>?theme=ocean</code></div>
-        <img src="/media/examples/output-ocean.png" alt="Ocean Theme" loading="lazy" />
+        <img src="/media/examples/output-ocean.svg" alt="Ocean Theme" loading="lazy" />
       </div>
       <div class="theme-card">
         <div class="theme-card-title"><span>Catppuccin</span><code>?theme=catppuccin</code></div>
-        <img src="/media/examples/output-catppuccin.png" alt="Catppuccin Theme" loading="lazy" />
+        <img src="/media/examples/output-catppuccin.svg" alt="Catppuccin Theme" loading="lazy" />
       </div>
       <div class="theme-card">
         <div class="theme-card-title"><span>Dracula</span><code>?theme=dracula</code></div>
-        <img src="/media/examples/output-dracula.png" alt="Dracula Theme" loading="lazy" />
+        <img src="/media/examples/output-dracula.svg" alt="Dracula Theme" loading="lazy" />
       </div>
       <div class="theme-card">
         <div class="theme-card-title"><span>Crimson</span><code>?theme=crimson</code></div>
-        <img src="/media/examples/output-crimson.png" alt="Crimson Theme" loading="lazy" />
+        <img src="/media/examples/output-crimson.svg" alt="Crimson Theme" loading="lazy" />
       </div>
       <div class="theme-card">
         <div class="theme-card-title"><span>Tokyo Night</span><code>?theme=tokyonight</code></div>
-        <img src="/media/examples/output-tokyonight.png" alt="Tokyo Night Theme" loading="lazy" />
+        <img src="/media/examples/output-tokyonight.svg" alt="Tokyo Night Theme" loading="lazy" />
       </div>
       <div class="theme-card">
         <div class="theme-card-title"><span>Sunset</span><code>?theme=sunset</code></div>
-        <img src="/media/examples/output-sunset.png" alt="Sunset Theme" loading="lazy" />
+        <img src="/media/examples/output-sunset.svg" alt="Sunset Theme" loading="lazy" />
       </div>
       <div class="theme-card">
         <div class="theme-card-title"><span>Sakura</span><code>?theme=sakura</code></div>
-        <img src="/media/examples/output-sakura.png" alt="Sakura Theme" loading="lazy" />
+        <img src="/media/examples/output-sakura.svg" alt="Sakura Theme" loading="lazy" />
       </div>
       <div class="theme-card">
         <div class="theme-card-title"><span>365-Day Rolling Window</span><code>?year=none</code></div>
-        <img src="/media/examples/output-rolling-window.png" alt="365-Day Rolling Window" loading="lazy" />
+        <img src="/media/examples/output-rolling-window.svg" alt="365-Day Rolling Window" loading="lazy" />
       </div>
     </div>
 
@@ -1198,6 +1226,11 @@
     </div>
 
     <div class="example">
+      <h3>As SVG (recommended):</h3>
+      <pre>/api/graph?username=spectrewolf8&amp;stats=true&amp;format=svg</pre>
+    </div>
+
+    <div class="example">
       <h3>Full customization:</h3>
       <pre>
 /api/graph?username=spectrewolf8&amp;year=2025&amp;width=1200&amp;height=700&amp;stats=true&amp;credit=true&amp;theme=neon</pre
@@ -1214,7 +1247,11 @@
 
     <h2>Response Headers</h2>
     <ul>
-      <li><code>Content-Type: image/png</code></li>
+      <li>
+        <code>Content-Type: image/png</code>, or
+        <code>image/svg+xml</code> with <code>format=svg</code> (gzipped when
+        the client accepts it)
+      </li>
       <li>
         <code>Cache-Control: no-store, no-cache, must-revalidate, max-age=0</code>
         (images are never cached client-side, so README graphs are always
@@ -1800,6 +1837,7 @@
         builderAppendTheme(params);
         if (stats) params.append("stats", "true");
         if (credit) params.append("credit", "true");
+        builderAppendImageFormat(params);
 
         const url = `${baseUrl}/api/graph?${params.toString()}`;
 
@@ -1844,6 +1882,7 @@
         builderAppendTheme(params);
         if (stats) params.append("stats", "true");
         if (credit) params.append("credit", "true");
+        builderAppendImageFormat(params);
 
         // Add cache-busting parameter to force fresh image load
         params.append("t", Date.now());
@@ -1866,6 +1905,14 @@
             </div>
           </div>
         `;
+      }
+
+      // PNG is the API default, so only SVG needs the parameter
+      function builderAppendImageFormat(params) {
+        const imageFormat =
+          document.querySelector('input[name="imageFormat"]:checked')?.value ||
+          "svg";
+        if (imageFormat === "svg") params.append("format", "svg");
       }
 
       function copyUrl() {
@@ -1930,9 +1977,9 @@
           }
         });
 
-        // Handle URL format radio buttons
+        // Handle snippet and image format radio buttons
         const radioButtons = document.querySelectorAll(
-          'input[name="urlFormat"]',
+          'input[name="urlFormat"], input[name="imageFormat"]',
         );
         radioButtons.forEach((button) => {
           button.addEventListener("change", function () {

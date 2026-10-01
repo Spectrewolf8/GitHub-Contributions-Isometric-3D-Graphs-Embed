@@ -40,6 +40,11 @@ const tests = [
     expectPNG: true,
   },
   {
+    name: "SVG Graph with Stats",
+    url: `${BASE_URL}/api/graph?username=spectrewolf8&stats=true&format=svg`,
+    expectSVG: true,
+  },
+  {
     name: "Missing Username",
     url: `${BASE_URL}/api/graph`,
     expectError: true,
@@ -78,6 +83,17 @@ async function runTest(test) {
     if (test.expectPNG && !contentType.includes("image/png")) {
       status = "❌ FAIL";
       details.push(`Expected PNG, got ${contentType}`);
+    }
+
+    if (test.expectSVG) {
+      const body = await response.text();
+      if (!contentType.includes("image/svg+xml")) {
+        status = "❌ FAIL";
+        details.push(`Expected SVG, got ${contentType}`);
+      } else if (!body.startsWith("<svg") || !body.endsWith("</svg>")) {
+        status = "❌ FAIL";
+        details.push("SVG body is not a complete <svg> document");
+      }
     }
 
     // Check status code

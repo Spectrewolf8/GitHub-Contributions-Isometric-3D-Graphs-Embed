@@ -6,12 +6,13 @@
  * - Daily caching per username (one generation per day) using Supabase Storage
  * - Multiple fetches served from cache
  * - Customizable query parameters for themes, dimensions, stats
- * - PNG image output
+ * - PNG or SVG image output (format=svg)
  */
 
 import "dotenv/config";
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
+import { gzipSync } from "node:zlib";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
@@ -26,6 +27,7 @@ import {
   exportToPNG,
   setTheme,
 } from "./src/renderer.js";
+import { renderSVG } from "./src/svg-renderer.js";
 import {
   GITHUB_THEME,
   DARK_THEME,
@@ -58,6 +60,10 @@ const AVAILABLE_THEMES = {
 };
 const PORT = process.env.PORT || 3000;
 const BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME || "isometric-cache";
+const CONTENT_TYPES = {
+  png: "image/png",
+  svg: "image/svg+xml; charset=utf-8",
+};
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const documentationHTML = readFileSync(
   join(__dirname, "docs", "index.html"),
@@ -84,9 +90,12 @@ function getCacheKey(username, params) {
   // The username must also be normalized inside the hashed params, otherwise
   // the hash segment would still differ by case.
   const normalizedUsername = (username || "").toLowerCase();
-  const paramsStr = JSON.stringify({ ...params, username: normalizedUsername });
+  // The format is carried by the file extension and left out of the hash, so
+  // PNG keys stay the same as before SVG support existed.
+  const { format, ...rest } = params;
+  const paramsStr = JSON.stringify({ ...rest, username: normalizedUsername });
   const hash = Buffer.from(paramsStr).toString("base64").replace(/[/+=]/g, "");
-  return `daily/${date}/${normalizedUsername}/${hash}.png`;
+  return `daily/${date}/${normalizedUsername}/${hash}.${format}`;
 }
 
 /**
@@ -117,14 +126,15 @@ async function getCachedImage(cacheKey) {
  * Store image in Supabase Storage
  * @param {string} cacheKey
  * @param {Buffer} imageBuffer
+ * @param {string} format - "png" or "svg"
  * @returns {Promise<void>}
  */
-async function cacheImage(cacheKey, imageBuffer) {
+async function cacheImage(cacheKey, imageBuffer, format) {
   try {
     const { error } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(cacheKey, imageBuffer, {
-        contentType: "image/png",
+        contentType: CONTENT_TYPES[format],
         cacheControl: "86400", // 24 hours
         upsert: true, // Overwrite if exists
       });
@@ -212,13 +222,14 @@ function parseQueryParams(search) {
     border: params.get("border") || null,
     accent: params.get("accent") || null,
     labelColor: params.get("label") || null,
+    format: (params.get("format") || "").toLowerCase() === "svg" ? "svg" : "png",
   };
 }
 
 /**
  * Generate isometric contribution graph
  * @param {Object} params
- * @returns {Promise<Buffer>}
+ * @returns {Promise<Buffer>} PNG or SVG bytes, per params.format
  */
 async function generateGraph(params) {
   const { username, year, width, height, stats, credit, theme } = params;
@@ -267,6 +278,10 @@ async function generateGraph(params) {
     username: credit ? username : null,
   };
 
+  if (params.format === "svg") {
+    return Buffer.from(renderSVG(days, { ...renderOptions, stats }), "utf8");
+  }
+
   // Render chart
   const canvas = stats
     ? renderWithStats(days, renderOptions)
@@ -282,26 +297,36 @@ async function generateGraph(params) {
 }
 
 /**
- * Send PNG response
+ * Send image response
+ * @param {http.IncomingMessage} req
  * @param {http.ServerResponse} res
  * @param {Buffer} imageBuffer
+ * @param {string} format - "png" or "svg"
  * @param {boolean} fromCache
  */
-function sendPNGResponse(res, imageBuffer, fromCache = false) {
+function sendImageResponse(req, res, imageBuffer, format, fromCache = false) {
+  // SVG is text and gzips to about a fifth of its size. PNG is already
+  // compressed, so it is sent as is.
+  const gzip =
+    format === "svg" && /\bgzip\b/.test(req.headers["accept-encoding"] || "");
+  const body = gzip ? gzipSync(imageBuffer) : imageBuffer;
+
   // No client-side caching: browsers and GitHub's camo image proxy must fetch
   // a fresh image every time so README graphs never show stale data. Freshness
   // is handled server-side by the Supabase daily cache, not by the client.
   const headers = {
-    "Content-Type": "image/png",
-    "Content-Length": imageBuffer.length,
+    "Content-Type": CONTENT_TYPES[format],
+    "Content-Length": body.length,
     "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
     Pragma: "no-cache",
     Expires: "0",
     "X-Cache": fromCache ? "HIT" : "MISS",
   };
+  if (format === "svg") headers.Vary = "Accept-Encoding";
+  if (gzip) headers["Content-Encoding"] = "gzip";
 
   res.writeHead(200, headers);
-  res.end(imageBuffer);
+  res.end(body);
 }
 
 /**
@@ -364,8 +389,9 @@ async function handleRequest(req, res) {
         );
       }
 
-      const { username, year, theme, width, height, stats, credit } = params;
-      const paramsLog = `theme=${theme} year=${year} size=${width}x${height} stats=${stats} credit=${credit}`;
+      const { username, year, theme, width, height, stats, credit, format } =
+        params;
+      const paramsLog = `format=${format} theme=${theme} year=${year} size=${width}x${height} stats=${stats} credit=${credit}`;
       console.log(`[REQ]   ${username} — ${paramsLog}`);
 
       // Generate cache key
@@ -379,7 +405,7 @@ async function handleRequest(req, res) {
         trackAnalytics(params, true).catch((err) =>
           console.error("Analytics error:", err),
         );
-        return sendPNGResponse(res, cachedImage, true);
+        return sendImageResponse(req, res, cachedImage, params.format, true);
       }
 
       // Generate new graph. fetchContributions() throws on persistently
@@ -393,7 +419,7 @@ async function handleRequest(req, res) {
       );
 
       // Data is validated complete, so it's safe to cache.
-      cacheImage(cacheKey, imageBuffer)
+      cacheImage(cacheKey, imageBuffer, params.format)
         .then(() =>
           console.log(`[SAVE]  ${params.username} — cached to Supabase`),
         )
@@ -402,7 +428,7 @@ async function handleRequest(req, res) {
         );
 
       // Send response
-      return sendPNGResponse(res, imageBuffer, false);
+      return sendImageResponse(req, res, imageBuffer, params.format, false);
     } catch (error) {
       const isNotFound =
         error.message.includes("Could not resolve to a User") ||
@@ -511,7 +537,16 @@ async function handleRequest(req, res) {
     try {
       const filePath = join(process.cwd(), url.pathname.slice(1)); // Remove leading slash
       const fs = await import("node:fs");
-      const fileBuffer = fs.readFileSync(filePath);
+      const stat = fs.statSync(filePath);
+
+      // Browsers revalidate on every load and get a 304 while the file is
+      // unchanged, so regenerated example images show up immediately.
+      const etag = `W/"${stat.size.toString(16)}-${Math.floor(stat.mtimeMs).toString(16)}"`;
+      const cacheHeaders = { "Cache-Control": "public, no-cache", ETag: etag };
+      if (req.headers["if-none-match"] === etag) {
+        res.writeHead(304, cacheHeaders);
+        return res.end();
+      }
 
       // Determine content type based on file extension
       const ext = url.pathname.toLowerCase().split(".").pop();
@@ -523,11 +558,21 @@ async function handleRequest(req, res) {
         svg: "image/svg+xml",
       };
 
-      res.writeHead(200, {
+      let body = fs.readFileSync(filePath);
+      const headers = {
         "Content-Type": contentTypes[ext] || "application/octet-stream",
-        "Cache-Control": "public, max-age=86400", // 24 hours
-      });
-      return res.end(fileBuffer);
+        ...cacheHeaders,
+      };
+      if (ext === "svg") {
+        headers.Vary = "Accept-Encoding";
+        if (/\bgzip\b/.test(req.headers["accept-encoding"] || "")) {
+          body = gzipSync(body);
+          headers["Content-Encoding"] = "gzip";
+        }
+      }
+
+      res.writeHead(200, headers);
+      return res.end(body);
     } catch (error) {
       return sendErrorResponse(res, 404, "File not found");
     }

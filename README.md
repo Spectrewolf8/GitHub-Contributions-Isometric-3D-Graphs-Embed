@@ -7,77 +7,77 @@ Generate beautiful 3D isometric visualizations of GitHub contribution graphs. Av
 <table>
   <tr>
     <td align="center">
-      <img src="media/examples/output-github.png" width="300" alt="GitHub Theme"/><br/>
+      <img src="media/examples/output-github.svg" width="300" alt="GitHub Theme"/><br/>
       <b>GitHub Theme</b>
     </td>
     <td align="center">
-      <img src="media/examples/output-light.png" width="300" alt="Light Theme"/><br/>
+      <img src="media/examples/output-light.svg" width="300" alt="Light Theme"/><br/>
       <b>Light Theme</b>
     </td>
     <td align="center">
-      <img src="media/examples/output-dark.png" width="300" alt="Dark Theme"/><br/>
+      <img src="media/examples/output-dark.svg" width="300" alt="Dark Theme"/><br/>
       <b>Dark Theme</b>
     </td>
   </tr>
   <tr>
     <td align="center">
-      <img src="media/examples/output-neon.png" width="300" alt="Neon Theme"/><br/>
+      <img src="media/examples/output-neon.svg" width="300" alt="Neon Theme"/><br/>
       <b>Neon Theme</b>
     </td>
     <td align="center">
-      <img src="media/examples/output-ocean.png" width="300" alt="Ocean Theme"/><br/>
+      <img src="media/examples/output-ocean.svg" width="300" alt="Ocean Theme"/><br/>
       <b>Ocean Theme</b>
     </td>
     <td align="center">
-      <img src="media/examples/output-minimal.png" width="300" alt="Minimal Theme"/><br/>
+      <img src="media/examples/output-minimal.svg" width="300" alt="Minimal Theme"/><br/>
       <b>Minimal Theme</b>
     </td>
   </tr>
   <tr>
     <td align="center">
-      <img src="media/examples/output-catppuccin.png" width="300" alt="Catppuccin Theme"/><br/>
+      <img src="media/examples/output-catppuccin.svg" width="300" alt="Catppuccin Theme"/><br/>
       <b>Catppuccin Theme</b>
     </td>
     <td align="center">
-      <img src="media/examples/output-dracula.png" width="300" alt="Dracula Theme"/><br/>
+      <img src="media/examples/output-dracula.svg" width="300" alt="Dracula Theme"/><br/>
       <b>Dracula Theme</b>
     </td>
     <td align="center">
-      <img src="media/examples/output-crimson.png" width="300" alt="Crimson Theme"/><br/>
+      <img src="media/examples/output-crimson.svg" width="300" alt="Crimson Theme"/><br/>
       <b>Crimson Theme</b>
     </td>
   </tr>
   <tr>
     <td align="center">
-      <img src="media/examples/output-tokyonight.png" width="300" alt="Tokyo Night Theme"/><br/>
+      <img src="media/examples/output-tokyonight.svg" width="300" alt="Tokyo Night Theme"/><br/>
       <b>Tokyo Night Theme</b>
     </td>
     <td align="center">
-      <img src="media/examples/output-sunset.png" width="300" alt="Sunset Theme"/><br/>
+      <img src="media/examples/output-sunset.svg" width="300" alt="Sunset Theme"/><br/>
       <b>Sunset Theme</b>
     </td>
     <td align="center">
-      <img src="media/examples/output-sakura.png" width="300" alt="Sakura Theme"/><br/>
+      <img src="media/examples/output-sakura.svg" width="300" alt="Sakura Theme"/><br/>
       <b>Sakura Theme</b>
     </td>
   </tr>
   <tr>
     <td align="center">
-      <img src="media/examples/output-not-stats.png" width="300" alt="Without Stats"/><br/>
+      <img src="media/examples/output-not-stats.svg" width="300" alt="Without Stats"/><br/>
       <b>Without Stats</b>
     </td>
     <td align="center">
-      <img src="media/examples/output-no-credit.png" width="300" alt="Without Credit"/><br/>
+      <img src="media/examples/output-no-credit.svg" width="300" alt="Without Credit"/><br/>
       <b>Without Credit</b>
     </td>
     <td align="center">
-      <img src="media/examples/output.png" width="300" alt="Default Theme"/><br/>
+      <img src="media/examples/output.svg" width="300" alt="Default Theme"/><br/>
       <b>One Year</b>
     </td>
   </tr>
   <tr>
     <td align="center">
-      <img src="./media/examples/output-rolling-window.png" alt="365-Day Rolling Window" width="300" ><br/>
+      <img src="./media/examples/output-rolling-window.svg" alt="365-Day Rolling Window" width="300" ><br/>
       <b>365-Day Rolling Window (Default)</b>
     </td>
     <td align="center"></td>
@@ -137,6 +137,9 @@ npm run generate -- spectrewolf8 2025 graph.png --stats --credit
 
 # Custom dimensions
 npm run generate -- spectrewolf8 2025 graph.png --width 1920 --height 1080
+
+# SVG output (any .svg output name, or --svg)
+npm run generate -- spectrewolf8 2025 graph.svg --stats
 ```
 
 **CLI Options:**
@@ -145,6 +148,7 @@ npm run generate -- spectrewolf8 2025 graph.png --width 1920 --height 1080
 - `--credit` - Show username in bottom right
 - `--width <px>` - Canvas width (default: 1000)
 - `--height <px>` - Canvas height (default: 600)
+- `--svg` - Write an SVG instead of a PNG (chosen automatically for a `.svg` output name)
 
 ### API Server
 
@@ -185,6 +189,7 @@ GET /api/graph
 | `height`   | number        | No       | `600`             | Image height in pixels                                                          |
 | `stats`    | boolean       | No       | `false`           | Include statistics overlay                                                      |
 | `credit`   | boolean       | No       | `false`           | Show username credit                                                            |
+| `format`   | string        | No       | `png`             | Image format: `png` or `svg`. SVG is recommended: it stays sharp at any display size and is smaller over the wire |
 
 ### API Examples
 
@@ -222,6 +227,12 @@ https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spe
 
 ```
 https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&credit=true
+```
+
+**As SVG (recommended):**
+
+```
+https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&stats=true&format=svg
 ```
 
 **Full Customization:**
@@ -267,6 +278,8 @@ Pragma: no-cache
 Expires: 0
 X-Cache: HIT | MISS
 ```
+
+With `format=svg` the content type is `image/svg+xml; charset=utf-8`, and the body is gzipped (`Content-Encoding: gzip`) when the client accepts it.
 
 ### Additional Endpoints
 
@@ -361,6 +374,21 @@ const canvas = renderWithStats(days, {
 });
 ```
 
+### Render SVG
+
+```javascript
+import { renderSVG } from "./src/svg-renderer.js";
+
+// Uses the theme set with setTheme(), like the PNG renderer
+const svg = renderSVG(days, {
+  width: 1000,
+  height: 600,
+  stats: true, // optional stats overlay
+  username: "spectrewolf8", // optional credit
+});
+writeFileSync("output.svg", svg);
+```
+
 ### Available Themes
 
 ```javascript
@@ -397,23 +425,25 @@ setTheme(
 
 ## Embedding in README
 
+SVG is recommended for embeds: it stays sharp at any size. Leave out `format=svg` to get a PNG.
+
 ### Markdown
 
 ```markdown
-![GitHub Contributions](https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&stats=true)
+![GitHub Contributions](https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&stats=true&format=svg)
 ```
 
 **With theme:**
 
 ```markdown
-![GitHub Contributions](https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&theme=dark&stats=true)
+![GitHub Contributions](https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&theme=dark&stats=true&format=svg)
 ```
 
 ### HTML
 
 ```html
 <img
-  src="https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&theme=neon&stats=true"
+  src="https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&theme=neon&stats=true&format=svg"
   alt="GitHub Contributions"
 />
 ```
@@ -431,10 +461,10 @@ setTheme(
 
 ## Output
 
-Generates PNG images with:
+Generates PNG or SVG images with:
 
 - **Resolution**: Customizable (default 1000x600)
-- **Format**: PNG with transparency
+- **Format**: PNG with transparency, or SVG with transparency. SVG text is drawn as Segoe UI outlines, so it looks the same as the PNG on every device
 - **Size**: ~20-30 KB (varies with dimensions)
 
 ### Statistics Displayed

@@ -56,6 +56,13 @@ try {
     family: "Segoe UI",
     weight: "bold",
   });
+  // Segoe UI has no arrow glyphs (used in date ranges). Without this, each
+  // host falls back to whatever system font it has, so PNGs differ between
+  // Windows and Linux. The file is Segoe UI Symbol subset to U+2190-2193,
+  // used by fillTextWithArrows() and by the SVG renderer.
+  registerFont(join(fontsDir, "Segoe UI Symbol Arrows.ttf"), {
+    family: "Segoe UI Symbol",
+  });
   console.log("✓ Registered Segoe UI fonts");
 } catch (e) {
   console.warn("⚠ Could not register Segoe UI fonts:", e.message);
@@ -106,18 +113,18 @@ const dateFormat = new Intl.DateTimeFormat("en-US", {
 });
 
 /**
- * Render isometric contribution graph to canvas
+ * Lay out the isometric cubes for a set of days. Shared by the PNG and SVG
+ * renderers so both place every cube identically.
  * @param {Array} days - Array of day objects with {date, count, color, week}
- * @param {Object} options - Rendering options
- * @param {number} options.width - Canvas width (default: 1000)
- * @param {number} options.height - Canvas height (default: 600)
- * @param {number} options.cubeSize - Size of each cube (default: 16)
- * @param {number} options.maxHeight - Maximum cube height (default: 100)
- * @param {string} options.username - Username to display as credit (optional)
- * @returns {Canvas} Canvas with rendered graph
+ * @param {Object} options
+ * @param {number} options.width - Image width (default: 1000)
+ * @param {number} options.height - Image height (default: 600)
+ * @returns {Object} {cubeSize, cubeScale, offsetX, offsetY, cubes}, where each
+ *   cube is {day, weekIndex, dayIndex, x, y, height, level, color} with x/y in
+ *   obelisk 3D space and color as a "#rrggbb" string from the active theme
  */
-export function renderIsometricChart(days, options = {}) {
-  const { width = 1000, height = 600, username = null } = options;
+export function layoutChart(days, options = {}) {
+  const { width = 1000, height = 600 } = options;
 
   // Scale cube size based on canvas dimensions (base size 16 for 1000x600)
   const baseWidth = 1000;
@@ -128,18 +135,6 @@ export function renderIsometricChart(days, options = {}) {
   const cubeSize = Math.max(6, Math.round(rawCubeSize / 2) * 2);
   const cubeScale = cubeSize / baseCubeSize;
   const maxHeight = 100 * cubeScale;
-
-  // Create canvas
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext("2d");
-
-  // Enable antialiasing for smoother rendering
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-  ctx.antialias = "subpixel";
-
-  // Clear canvas with transparent background
-  ctx.clearRect(0, 0, width, height);
 
   // Calculate max count for scaling
   const maxCount = Math.max(...days.map((d) => d.count));
@@ -170,23 +165,18 @@ export function renderIsometricChart(days, options = {}) {
   const offsetX = width * 0.13;
   const offsetY = Math.max(height * 0.15, minOffsetY);
 
-  // Setup obelisk with scaled position
-  const point = new obelisk.Point(offsetX, offsetY);
-  const pixelView = new obelisk.PixelView(canvas, point);
-
   // Scale the offsets to match cube size scaling
   const GH_OFFSET = GH_OFFSET_base;
   const DAY_OFFSET = 13 * cubeScale;
   let transform = GH_OFFSET;
 
-  // Render each week
-  for (const week of weeks) {
+  const cubes = [];
+  weeks.forEach((week, weekIndex) => {
     const x = transform / (GH_OFFSET + 1);
     transform += GH_OFFSET;
     let dayOffsetY = 0;
 
-    // Render each day in the week
-    for (const day of week) {
+    week.forEach((day, dayIndex) => {
       const y = dayOffsetY / GH_OFFSET;
       dayOffsetY += DAY_OFFSET;
 
@@ -198,22 +188,73 @@ export function renderIsometricChart(days, options = {}) {
 
       // Get color from theme based on contribution level
       const level = day.level || 0;
-      const themeColor =
-        STYLE_CONFIG.graph?.colors?.[`level${level}`] || day.color;
-      const colorHex = themeColor.replace("#", "");
+      const color = STYLE_CONFIG.graph?.colors?.[`level${level}`] || day.color;
 
-      const dimension = new obelisk.CubeDimension(
-        cubeSize,
-        cubeSize,
-        cubeHeight,
-      );
-      const color = new obelisk.CubeColor().getByHorizontalColor(
-        Number.parseInt(colorHex, 16),
-      );
-      const cube = new obelisk.Cube(dimension, color, false);
-      const p3d = new obelisk.Point3D(cubeSize * x, cubeSize * y, 0);
-      pixelView.renderObject(cube, p3d);
-    }
+      cubes.push({
+        day,
+        weekIndex,
+        dayIndex,
+        x: cubeSize * x,
+        y: cubeSize * y,
+        height: cubeHeight,
+        level,
+        color,
+      });
+    });
+  });
+
+  return { cubeSize, cubeScale, offsetX, offsetY, cubes };
+}
+
+/**
+ * Get obelisk's shaded face colors for a cube's base (top) color
+ * @param {string} hexColor - "#rrggbb"
+ * @returns {Object} obelisk CubeColor with 32-bit ARGB face colors
+ */
+export function getCubeColor(hexColor) {
+  return new obelisk.CubeColor().getByHorizontalColor(
+    Number.parseInt(hexColor.replace("#", ""), 16),
+  );
+}
+
+/**
+ * Render isometric contribution graph to canvas
+ * @param {Array} days - Array of day objects with {date, count, color, week}
+ * @param {Object} options - Rendering options
+ * @param {number} options.width - Canvas width (default: 1000)
+ * @param {number} options.height - Canvas height (default: 600)
+ * @param {string} options.username - Username to display as credit (optional)
+ * @returns {Canvas} Canvas with rendered graph
+ */
+export function renderIsometricChart(days, options = {}) {
+  const { width = 1000, height = 600, username = null } = options;
+  const { cubeSize, offsetX, offsetY, cubes } = layoutChart(days, options);
+
+  // Create canvas
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext("2d");
+
+  // Enable antialiasing for smoother rendering
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.antialias = "subpixel";
+
+  // Clear canvas with transparent background
+  ctx.clearRect(0, 0, width, height);
+
+  // Setup obelisk with scaled position
+  const point = new obelisk.Point(offsetX, offsetY);
+  const pixelView = new obelisk.PixelView(canvas, point);
+
+  for (const cube of cubes) {
+    const dimension = new obelisk.CubeDimension(
+      cubeSize,
+      cubeSize,
+      cube.height,
+    );
+    const shape = new obelisk.Cube(dimension, getCubeColor(cube.color), false);
+    const p3d = new obelisk.Point3D(cube.x, cube.y, 0);
+    pixelView.renderObject(shape, p3d);
   }
 
   // Draw username credit if provided
@@ -316,12 +357,12 @@ export function calculateStats(days) {
     weekTotal += d.count;
   }
 
-  const weekStartDay = currentWeekDays[0]?.date;
-  const weekEndDay = currentWeekDays.at(-1)?.date;
-  const weekDateFirst = weekStartDay ? dateFormat.format(weekStartDay) : "";
-  const weekDateLast = weekEndDay ? dateFormat.format(weekEndDay) : "";
-  const weekDatesTotal =
-    weekStartDay && weekEndDay ? `${weekDateFirst} → ${weekDateLast}` : "";
+  // The range always shows the calendar week (Sunday to today), even when the
+  // data has no days in it, e.g. a graph for a past year. dateFormat is UTC,
+  // so format the local calendar dates as UTC dates to avoid a day shift.
+  const asUTCDate = (d) =>
+    new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const weekDatesTotal = `${dateFormat.format(asUTCDate(currentWeekStart))} → ${dateFormat.format(asUTCDate(currentDate))}`;
 
   return {
     yearTotal,
@@ -648,8 +689,24 @@ function drawFlexStatItem(ctx, value, label, subtext, x, y, scale = 1) {
   if (subtext && subtext.length > 0) {
     ctx.fillStyle = STYLE_CONFIG.subtext.color;
     const subtextFontSize = STYLE_CONFIG.subtext.fontSize * scale;
-    ctx.font = `${STYLE_CONFIG.subtext.fontWeight} ${subtextFontSize}px "${STYLE_CONFIG.subtext.fontFamily}", sans-serif`;
-    ctx.fillText(subtext, x, y + 54 * scale);
+    const font = `${STYLE_CONFIG.subtext.fontWeight} ${subtextFontSize}px "${STYLE_CONFIG.subtext.fontFamily}", sans-serif`;
+    const arrowFont = `${subtextFontSize}px "Segoe UI Symbol", sans-serif`;
+    fillTextWithArrows(ctx, subtext, x, y + 54 * scale, font, arrowFont);
+  }
+}
+
+/**
+ * Draw text, switching to the bundled Segoe UI Symbol face for arrows.
+ * Segoe UI has no arrow glyphs and canvas would otherwise pick a fallback
+ * from whatever fonts the host has installed.
+ */
+function fillTextWithArrows(ctx, text, x, y, font, arrowFont) {
+  let cursor = x;
+  for (const run of text.split(/([←-↓]+)/)) {
+    if (!run) continue;
+    ctx.font = /^[←-↓]+$/.test(run) ? arrowFont : font;
+    ctx.fillText(run, cursor, y);
+    cursor += ctx.measureText(run).width;
   }
 }
 

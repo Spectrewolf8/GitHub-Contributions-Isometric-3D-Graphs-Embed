@@ -5,6 +5,7 @@
  * Usage: node generate.js <username> [year] [output] [--stats]
  */
 
+import "dotenv/config";
 import { writeFileSync } from "node:fs";
 import {
   fetchContributions,
@@ -16,6 +17,7 @@ import {
   calculateStats,
   exportToPNG,
 } from "./src/renderer.js";
+import { renderSVG } from "./src/svg-renderer.js";
 
 const args = process.argv.slice(2);
 const username = args[0];
@@ -23,6 +25,7 @@ const year =
   args[1] && !args[1].startsWith("--") ? Number.parseInt(args[1], 10) : null;
 const hasStatsFlag = args.includes("--stats");
 const hasCreditFlag = args.includes("--credit");
+const hasSvgFlag = args.includes("--svg");
 
 // Parse width and height flags
 const widthIndex = args.indexOf("--width");
@@ -41,8 +44,9 @@ let output;
 if (args.length >= 3 && !args[2].startsWith("--")) {
   output = args[2];
 } else {
-  output = `${username}-contributions.png`;
+  output = `${username}-contributions.${hasSvgFlag ? "svg" : "png"}`;
 }
+const asSVG = hasSvgFlag || output.toLowerCase().endsWith(".svg");
 
 if (!username) {
   console.error(
@@ -54,6 +58,9 @@ if (!username) {
   console.error("\nOptions:");
   console.error("  --stats          Include statistics overlay on the image");
   console.error("  --credit         Show username in bottom right corner");
+  console.error(
+    "  --svg            Write an SVG instead of a PNG (also used for .svg output names)",
+  );
   console.error("  --width <px>     Canvas width in pixels (default: 1000)");
   console.error("  --height <px>    Canvas height in pixels (default: 600)");
   process.exit(1);
@@ -92,6 +99,16 @@ async function main() {
       height: customHeight,
       username: hasCreditFlag ? username : null,
     };
+
+    if (asSVG) {
+      const svg = renderSVG(days, { ...renderOptions, stats: hasStatsFlag });
+      writeFileSync(output, svg);
+      console.log(`\n✓ Successfully generated ${output}`);
+      console.log(`  Size: ${(Buffer.byteLength(svg) / 1024).toFixed(1)} KB`);
+      console.log(`  Dimensions: ${customWidth}x${customHeight}`);
+      return;
+    }
+
     const canvas = hasStatsFlag
       ? renderWithStats(days, renderOptions)
       : renderIsometricChart(days, renderOptions);
