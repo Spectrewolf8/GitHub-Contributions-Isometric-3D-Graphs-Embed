@@ -12,6 +12,7 @@
     "server": "node server.js",
     "dev": "node --watch server.js",
     "test:api": "node test-api.js",
+    "test:concurrency": "node test-concurrency.js",
     "cleanup": "node cleanup-cache.js",
     "cleanup:scheduler": "node cleanup-scheduler.js"
   },

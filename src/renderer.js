@@ -22,7 +22,10 @@ import { GITHUB_THEME } from "./theme-config.js";
 let STYLE_CONFIG = { ...GITHUB_THEME };
 
 /**
- * Set the active theme
+ * Set the default theme, used by render calls that don't pass options.theme.
+ * Handy for the CLI scripts. Concurrent callers (the API server) must pass
+ * options.theme instead: this is shared module state, so a theme set before
+ * an await can be replaced by another request before the render runs.
  * @param {Object} theme - Theme configuration object
  */
 export function setTheme(theme) {
@@ -119,12 +122,13 @@ const dateFormat = new Intl.DateTimeFormat("en-US", {
  * @param {Object} options
  * @param {number} options.width - Image width (default: 1000)
  * @param {number} options.height - Image height (default: 600)
+ * @param {Object} options.theme - Theme for cube colors (default: the theme set by setTheme)
  * @returns {Object} {cubeSize, cubeScale, offsetX, offsetY, cubes}, where each
  *   cube is {day, weekIndex, dayIndex, x, y, height, level, color} with x/y in
- *   obelisk 3D space and color as a "#rrggbb" string from the active theme
+ *   obelisk 3D space and color as a "#rrggbb" string from the theme
  */
 export function layoutChart(days, options = {}) {
-  const { width = 1000, height = 600 } = options;
+  const { width = 1000, height = 600, theme = STYLE_CONFIG } = options;
 
   // Scale cube size based on canvas dimensions (base size 16 for 1000x600)
   const baseWidth = 1000;
@@ -188,7 +192,7 @@ export function layoutChart(days, options = {}) {
 
       // Get color from theme based on contribution level
       const level = day.level || 0;
-      const color = STYLE_CONFIG.graph?.colors?.[`level${level}`] || day.color;
+      const color = theme.graph?.colors?.[`level${level}`] || day.color;
 
       cubes.push({
         day,
@@ -224,11 +228,20 @@ export function getCubeColor(hexColor) {
  * @param {number} options.width - Canvas width (default: 1000)
  * @param {number} options.height - Canvas height (default: 600)
  * @param {string} options.username - Username to display as credit (optional)
+ * @param {Object} options.theme - Theme to render with (default: the theme set by setTheme)
  * @returns {Canvas} Canvas with rendered graph
  */
 export function renderIsometricChart(days, options = {}) {
-  const { width = 1000, height = 600, username = null } = options;
-  const { cubeSize, offsetX, offsetY, cubes } = layoutChart(days, options);
+  const {
+    width = 1000,
+    height = 600,
+    username = null,
+    theme = STYLE_CONFIG,
+  } = options;
+  const { cubeSize, offsetX, offsetY, cubes } = layoutChart(days, {
+    ...options,
+    theme,
+  });
 
   // Create canvas
   const canvas = createCanvas(width, height);
@@ -259,7 +272,7 @@ export function renderIsometricChart(days, options = {}) {
 
   // Draw username credit if provided
   if (username) {
-    drawUsernameCredit(ctx, username, canvas.width, canvas.height);
+    drawUsernameCredit(ctx, theme, username, canvas.width, canvas.height);
   }
 
   return canvas;
@@ -404,13 +417,13 @@ export function exportToDataURL(canvas) {
 /**
  * Render contribution graph with stats overlay
  * @param {Array} days - Array of day objects
- * @param {Object} options - Rendering options
+ * @param {Object} options - Rendering options (same as renderIsometricChart)
  * @returns {Canvas} Canvas with graph and stats
  */
 export function renderWithStats(days, options = {}) {
   // Extract username before passing to renderIsometricChart to avoid double rendering
-  const { username, ...chartOptions } = options;
-  const canvas = renderIsometricChart(days, chartOptions);
+  const { username, theme = STYLE_CONFIG, ...chartOptions } = options;
+  const canvas = renderIsometricChart(days, { ...chartOptions, theme });
   const stats = calculateStats(days);
 
   const ctx = canvas.getContext("2d");
@@ -420,10 +433,11 @@ export function renderWithStats(days, options = {}) {
 
   // Draw contributions box (top right) - scaled and positioned
   const contributionsBoxWidth =
-    STYLE_CONFIG.dimensions.contributionsBoxWidth * scaleFactor;
+    theme.dimensions.contributionsBoxWidth * scaleFactor;
   const margin = 25 * scaleFactor;
   drawContributionsBox(
     ctx,
+    theme,
     stats,
     canvas.width - contributionsBoxWidth - margin,
     margin,
@@ -432,11 +446,12 @@ export function renderWithStats(days, options = {}) {
 
   // Draw streaks box (bottom left) - scaled and positioned
   const streaksBoxHeight =
-    STYLE_CONFIG.dimensions.streaksBoxHeight +
-    STYLE_CONFIG.dimensions.titleHeight +
-    STYLE_CONFIG.dimensions.averageBottomMargin;
+    theme.dimensions.streaksBoxHeight +
+    theme.dimensions.titleHeight +
+    theme.dimensions.averageBottomMargin;
   drawStreaksBox(
     ctx,
+    theme,
     stats,
     margin,
     canvas.height - streaksBoxHeight * scaleFactor - margin,
@@ -445,7 +460,7 @@ export function renderWithStats(days, options = {}) {
 
   // Draw username credit if provided
   if (username) {
-    drawUsernameCredit(ctx, username, canvas.width, canvas.height);
+    drawUsernameCredit(ctx, theme, username, canvas.width, canvas.height);
   }
 
   return canvas;
@@ -454,40 +469,41 @@ export function renderWithStats(days, options = {}) {
 /**
  * Draw contributions statistics box
  * @param {CanvasRenderingContext2D} ctx - Canvas context
+ * @param {Object} theme - Theme configuration object
  * @param {Object} stats - Statistics object
  * @param {number} x - X position
  * @param {number} y - Y position
  * @param {number} scale - Scale factor for responsive sizing
  */
-function drawContributionsBox(ctx, stats, x, y, scale = 1) {
-  const boxWidth = STYLE_CONFIG.dimensions.contributionsBoxWidth * scale;
-  const boxHeight = STYLE_CONFIG.dimensions.contributionsBoxHeight * scale;
-  const titleHeight = STYLE_CONFIG.dimensions.titleHeight * scale;
+function drawContributionsBox(ctx, theme, stats, x, y, scale = 1) {
+  const boxWidth = theme.dimensions.contributionsBoxWidth * scale;
+  const boxHeight = theme.dimensions.contributionsBoxHeight * scale;
+  const titleHeight = theme.dimensions.titleHeight * scale;
 
   // Title (outside, above the box) - aligned with left border of box
-  ctx.fillStyle = STYLE_CONFIG.title.color;
-  const titleFontSize = STYLE_CONFIG.title.fontSize * scale;
-  ctx.font = `${STYLE_CONFIG.title.fontWeight} ${titleFontSize}px "${STYLE_CONFIG.title.fontFamily}", sans-serif`;
+  ctx.fillStyle = theme.title.color;
+  const titleFontSize = theme.title.fontSize * scale;
+  ctx.font = `${theme.title.fontWeight} ${titleFontSize}px "${theme.title.fontFamily}", sans-serif`;
   ctx.fillText("Contributions", x, y + 16 * scale);
 
   // Box starts below title
   const boxY = y + titleHeight;
 
   // Drop shadow
-  ctx.shadowColor = STYLE_CONFIG.box.shadowColor;
-  ctx.shadowBlur = STYLE_CONFIG.box.shadowBlur * scale;
-  ctx.shadowOffsetX = STYLE_CONFIG.box.shadowOffsetX * scale;
-  ctx.shadowOffsetY = STYLE_CONFIG.box.shadowOffsetY * scale;
+  ctx.shadowColor = theme.box.shadowColor;
+  ctx.shadowBlur = theme.box.shadowBlur * scale;
+  ctx.shadowOffsetX = theme.box.shadowOffsetX * scale;
+  ctx.shadowOffsetY = theme.box.shadowOffsetY * scale;
 
   // Box background (transparent/semi-transparent)
-  ctx.fillStyle = STYLE_CONFIG.box.backgroundColor;
+  ctx.fillStyle = theme.box.backgroundColor;
   ctx.beginPath();
   ctx.roundRect(
     x,
     boxY,
     boxWidth,
     boxHeight,
-    STYLE_CONFIG.box.borderRadius * scale,
+    theme.box.borderRadius * scale,
   );
   ctx.fill();
 
@@ -498,8 +514,8 @@ function drawContributionsBox(ctx, stats, x, y, scale = 1) {
   ctx.shadowOffsetY = 0;
 
   // Border
-  ctx.strokeStyle = STYLE_CONFIG.box.borderColor;
-  ctx.lineWidth = STYLE_CONFIG.box.borderWidth * scale;
+  ctx.strokeStyle = theme.box.borderColor;
+  ctx.lineWidth = theme.box.borderWidth * scale;
   ctx.stroke();
 
   // Stats row
@@ -508,6 +524,7 @@ function drawContributionsBox(ctx, stats, x, y, scale = 1) {
   // Total
   drawFlexStatItem(
     ctx,
+    theme,
     stats.countTotal.toString(),
     "Total",
     stats.datesTotal,
@@ -519,6 +536,7 @@ function drawContributionsBox(ctx, stats, x, y, scale = 1) {
   // This week
   drawFlexStatItem(
     ctx,
+    theme,
     stats.weekCountTotal.toString(),
     "This week",
     stats.weekDatesTotal,
@@ -533,6 +551,7 @@ function drawContributionsBox(ctx, stats, x, y, scale = 1) {
     : stats.dateBest;
   drawFlexStatItem(
     ctx,
+    theme,
     stats.maxCount.toString(),
     "Best day",
     bestDayDate,
@@ -543,21 +562,21 @@ function drawContributionsBox(ctx, stats, x, y, scale = 1) {
 
   // Average (outside, below the box, right-aligned)
   const avgY =
-    boxY + boxHeight + STYLE_CONFIG.dimensions.averageBottomMargin * scale;
-  const avgTextFontSize = STYLE_CONFIG.averageText.fontSize * scale;
-  const avgValueFontSize = STYLE_CONFIG.averageValue.fontSize * scale;
-  const avgUnitFontSize = STYLE_CONFIG.averageUnit.fontSize * scale;
+    boxY + boxHeight + theme.dimensions.averageBottomMargin * scale;
+  const avgTextFontSize = theme.averageText.fontSize * scale;
+  const avgValueFontSize = theme.averageValue.fontSize * scale;
+  const avgUnitFontSize = theme.averageUnit.fontSize * scale;
 
-  ctx.fillStyle = STYLE_CONFIG.averageText.color;
-  ctx.font = `${STYLE_CONFIG.averageText.fontWeight} ${avgTextFontSize}px "${STYLE_CONFIG.averageText.fontFamily}", sans-serif`;
+  ctx.fillStyle = theme.averageText.color;
+  ctx.font = `${theme.averageText.fontWeight} ${avgTextFontSize}px "${theme.averageText.fontFamily}", sans-serif`;
   const avgText = "Average:";
   const avgNumText = stats.averageCount.toString();
   const dayText = "/ day";
 
   const dayWidth = ctx.measureText(dayText).width;
-  ctx.font = `${STYLE_CONFIG.averageValue.fontWeight} ${avgValueFontSize}px "${STYLE_CONFIG.averageValue.fontFamily}", sans-serif`;
+  ctx.font = `${theme.averageValue.fontWeight} ${avgValueFontSize}px "${theme.averageValue.fontFamily}", sans-serif`;
   const numWidth = ctx.measureText(avgNumText).width;
-  ctx.font = `${STYLE_CONFIG.averageText.fontWeight} ${avgTextFontSize}px "${STYLE_CONFIG.averageText.fontFamily}", sans-serif`;
+  ctx.font = `${theme.averageText.fontWeight} ${avgTextFontSize}px "${theme.averageText.fontFamily}", sans-serif`;
   const avgWidth = ctx.measureText(avgText).width;
 
   const spacing = 4 * scale;
@@ -566,52 +585,53 @@ function drawContributionsBox(ctx, stats, x, y, scale = 1) {
 
   ctx.fillText(avgText, startX, avgY);
 
-  ctx.fillStyle = STYLE_CONFIG.averageValue.color;
-  ctx.font = `${STYLE_CONFIG.averageValue.fontWeight} ${avgValueFontSize}px "${STYLE_CONFIG.averageValue.fontFamily}", sans-serif`;
+  ctx.fillStyle = theme.averageValue.color;
+  ctx.font = `${theme.averageValue.fontWeight} ${avgValueFontSize}px "${theme.averageValue.fontFamily}", sans-serif`;
   ctx.fillText(avgNumText, startX + avgWidth + spacing, avgY);
 
-  ctx.fillStyle = STYLE_CONFIG.averageUnit.color;
-  ctx.font = `${STYLE_CONFIG.averageUnit.fontWeight} ${avgUnitFontSize}px "${STYLE_CONFIG.averageUnit.fontFamily}", sans-serif`;
+  ctx.fillStyle = theme.averageUnit.color;
+  ctx.font = `${theme.averageUnit.fontWeight} ${avgUnitFontSize}px "${theme.averageUnit.fontFamily}", sans-serif`;
   ctx.fillText(dayText, startX + avgWidth + spacing + numWidth + spacing, avgY);
 }
 
 /**
  * Draw streaks statistics box
  * @param {CanvasRenderingContext2D} ctx - Canvas context
+ * @param {Object} theme - Theme configuration object
  * @param {Object} stats - Statistics object
  * @param {number} x - X position
  * @param {number} y - Y position
  * @param {number} scale - Scale factor for responsive sizing
  */
-function drawStreaksBox(ctx, stats, x, y, scale = 1) {
-  const boxWidth = STYLE_CONFIG.dimensions.streaksBoxWidth * scale;
-  const boxHeight = STYLE_CONFIG.dimensions.streaksBoxHeight * scale;
-  const titleHeight = STYLE_CONFIG.dimensions.titleHeight * scale;
+function drawStreaksBox(ctx, theme, stats, x, y, scale = 1) {
+  const boxWidth = theme.dimensions.streaksBoxWidth * scale;
+  const boxHeight = theme.dimensions.streaksBoxHeight * scale;
+  const titleHeight = theme.dimensions.titleHeight * scale;
 
   // Title (outside, above the box) - aligned with left border of box
-  ctx.fillStyle = STYLE_CONFIG.title.color;
-  const titleFontSize = STYLE_CONFIG.title.fontSize * scale;
-  ctx.font = `${STYLE_CONFIG.title.fontWeight} ${titleFontSize}px "${STYLE_CONFIG.title.fontFamily}", sans-serif`;
+  ctx.fillStyle = theme.title.color;
+  const titleFontSize = theme.title.fontSize * scale;
+  ctx.font = `${theme.title.fontWeight} ${titleFontSize}px "${theme.title.fontFamily}", sans-serif`;
   ctx.fillText("Streaks", x, y + 16 * scale);
 
   // Box starts below title
   const boxY = y + titleHeight;
 
   // Drop shadow
-  ctx.shadowColor = STYLE_CONFIG.box.shadowColor;
-  ctx.shadowBlur = STYLE_CONFIG.box.shadowBlur * scale;
-  ctx.shadowOffsetX = STYLE_CONFIG.box.shadowOffsetX * scale;
-  ctx.shadowOffsetY = STYLE_CONFIG.box.shadowOffsetY * scale;
+  ctx.shadowColor = theme.box.shadowColor;
+  ctx.shadowBlur = theme.box.shadowBlur * scale;
+  ctx.shadowOffsetX = theme.box.shadowOffsetX * scale;
+  ctx.shadowOffsetY = theme.box.shadowOffsetY * scale;
 
   // Box background (transparent/semi-transparent)
-  ctx.fillStyle = STYLE_CONFIG.box.backgroundColor;
+  ctx.fillStyle = theme.box.backgroundColor;
   ctx.beginPath();
   ctx.roundRect(
     x,
     boxY,
     boxWidth,
     boxHeight,
-    STYLE_CONFIG.box.borderRadius * scale,
+    theme.box.borderRadius * scale,
   );
   ctx.fill();
 
@@ -622,8 +642,8 @@ function drawStreaksBox(ctx, stats, x, y, scale = 1) {
   ctx.shadowOffsetY = 0;
 
   // Border
-  ctx.strokeStyle = STYLE_CONFIG.box.borderColor;
-  ctx.lineWidth = STYLE_CONFIG.box.borderWidth * scale;
+  ctx.strokeStyle = theme.box.borderColor;
+  ctx.lineWidth = theme.box.borderWidth * scale;
   ctx.stroke();
 
   // Stats row
@@ -634,6 +654,7 @@ function drawStreaksBox(ctx, stats, x, y, scale = 1) {
   const longestValue = `${stats.streakLongest} ${longestDays}`;
   drawFlexStatItem(
     ctx,
+    theme,
     longestValue,
     "Longest",
     stats.datesLongest,
@@ -652,6 +673,7 @@ function drawStreaksBox(ctx, stats, x, y, scale = 1) {
     stats.streakCurrent === 0 ? "No current streak" : stats.datesCurrent;
   drawFlexStatItem(
     ctx,
+    theme,
     currentValue,
     "Current",
     currentSubtext,
@@ -665,6 +687,7 @@ function drawStreaksBox(ctx, stats, x, y, scale = 1) {
  * Draw a flex stat item (vertical stack: value → label → subtext)
  * Matches HTML structure: d-block f2 text-bold → d-block text-small text-bold → d-block text-small color-fg-muted
  * @param {CanvasRenderingContext2D} ctx - Canvas context
+ * @param {Object} theme - Theme configuration object
  * @param {string} value - Main value (large, green, bold)
  * @param {string} label - Label text (small, bold, white)
  * @param {string} subtext - Subtext (small, gray, date range)
@@ -672,24 +695,33 @@ function drawStreaksBox(ctx, stats, x, y, scale = 1) {
  * @param {number} y - Y position
  * @param {number} scale - Scale factor for responsive sizing
  */
-function drawFlexStatItem(ctx, value, label, subtext, x, y, scale = 1) {
+function drawFlexStatItem(
+  ctx,
+  theme,
+  value,
+  label,
+  subtext,
+  x,
+  y,
+  scale = 1,
+) {
   // Value (large number)
-  ctx.fillStyle = STYLE_CONFIG.value.color;
-  const valueFontSize = STYLE_CONFIG.value.fontSize * scale;
-  ctx.font = `${STYLE_CONFIG.value.fontWeight} ${valueFontSize}px "${STYLE_CONFIG.value.fontFamily}", sans-serif`;
+  ctx.fillStyle = theme.value.color;
+  const valueFontSize = theme.value.fontSize * scale;
+  ctx.font = `${theme.value.fontWeight} ${valueFontSize}px "${theme.value.fontFamily}", sans-serif`;
   ctx.fillText(value, x, y + 22 * scale);
 
   // Label (Total, This week, etc.)
-  ctx.fillStyle = STYLE_CONFIG.label.color;
-  const labelFontSize = STYLE_CONFIG.label.fontSize * scale;
-  ctx.font = `${STYLE_CONFIG.label.fontWeight} ${labelFontSize}px "${STYLE_CONFIG.label.fontFamily}", sans-serif`;
+  ctx.fillStyle = theme.label.color;
+  const labelFontSize = theme.label.fontSize * scale;
+  ctx.font = `${theme.label.fontWeight} ${labelFontSize}px "${theme.label.fontFamily}", sans-serif`;
   ctx.fillText(label, x, y + 38 * scale);
 
   // Subtext (date range) - single line
   if (subtext && subtext.length > 0) {
-    ctx.fillStyle = STYLE_CONFIG.subtext.color;
-    const subtextFontSize = STYLE_CONFIG.subtext.fontSize * scale;
-    const font = `${STYLE_CONFIG.subtext.fontWeight} ${subtextFontSize}px "${STYLE_CONFIG.subtext.fontFamily}", sans-serif`;
+    ctx.fillStyle = theme.subtext.color;
+    const subtextFontSize = theme.subtext.fontSize * scale;
+    const font = `${theme.subtext.fontWeight} ${subtextFontSize}px "${theme.subtext.fontFamily}", sans-serif`;
     const arrowFont = `${subtextFontSize}px "Segoe UI Symbol", sans-serif`;
     fillTextWithArrows(ctx, subtext, x, y + 54 * scale, font, arrowFont);
   }
@@ -713,11 +745,18 @@ function fillTextWithArrows(ctx, text, x, y, font, arrowFont) {
 /**
  * Draw username credit in bottom right corner
  * @param {CanvasRenderingContext2D} ctx - Canvas context
+ * @param {Object} theme - Theme configuration object
  * @param {string} username - GitHub username
  * @param {number} canvasWidth - Canvas width
  * @param {number} canvasHeight - Canvas height
  */
-function drawUsernameCredit(ctx, username, canvasWidth, canvasHeight) {
+function drawUsernameCredit(
+  ctx,
+  theme,
+  username,
+  canvasWidth,
+  canvasHeight,
+) {
   // Save context state
   ctx.save();
 
@@ -726,11 +765,11 @@ function drawUsernameCredit(ctx, username, canvasWidth, canvasHeight) {
 
   // Discrete styling - small, subtle text with scaling
   const fontSize = 11 * scaleFactor;
-  const fontFamily = STYLE_CONFIG.subtext?.fontFamily || "Segoe UI";
+  const fontFamily = theme.subtext?.fontFamily || "Segoe UI";
   ctx.font = `${fontSize}px "${fontFamily}", sans-serif`;
 
   // Very subtle color with low opacity
-  const baseColor = STYLE_CONFIG.subtext?.color || "#768390";
+  const baseColor = theme.subtext?.color || "#768390";
   ctx.fillStyle = baseColor;
   ctx.globalAlpha = 0.5; // Make it more discrete
 

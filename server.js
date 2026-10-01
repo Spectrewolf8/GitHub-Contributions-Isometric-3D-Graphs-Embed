@@ -25,7 +25,6 @@ import {
   renderIsometricChart,
   renderWithStats,
   exportToPNG,
-  setTheme,
 } from "./src/renderer.js";
 import { renderSVG } from "./src/svg-renderer.js";
 import {
@@ -127,23 +126,20 @@ async function getCachedImage(cacheKey) {
  * @param {string} cacheKey
  * @param {Buffer} imageBuffer
  * @param {string} format - "png" or "svg"
- * @returns {Promise<void>}
+ * @returns {Promise<void>} Rejects if the upload failed, so callers can log
+ *   the real outcome.
  */
 async function cacheImage(cacheKey, imageBuffer, format) {
-  try {
-    const { error } = await supabase.storage
-      .from(BUCKET_NAME)
-      .upload(cacheKey, imageBuffer, {
-        contentType: CONTENT_TYPES[format],
-        cacheControl: "86400", // 24 hours
-        upsert: true, // Overwrite if exists
-      });
+  const { error } = await supabase.storage
+    .from(BUCKET_NAME)
+    .upload(cacheKey, imageBuffer, {
+      contentType: CONTENT_TYPES[format],
+      cacheControl: "86400", // 24 hours
+      upsert: true, // Overwrite if exists
+    });
 
-    if (error) {
-      console.error("Cache storage error:", error);
-    }
-  } catch (error) {
-    console.error("Cache storage error:", error);
+  if (error) {
+    throw error;
   }
 }
 
@@ -227,15 +223,14 @@ function parseQueryParams(search) {
 }
 
 /**
- * Generate isometric contribution graph
+ * Resolve the theme object for a request. A custom theme (theme=custom, or
+ * any color param present) is built from the user's colors; otherwise use a
+ * named preset, falling back to github for unknown names.
  * @param {Object} params
- * @returns {Promise<Buffer>} PNG or SVG bytes, per params.format
+ * @returns {Object} Theme configuration object
  */
-async function generateGraph(params) {
-  const { username, year, width, height, stats, credit, theme } = params;
-
-  // Apply theme. A custom theme (theme=custom, or any color param present) is
-  // built from the user's colors; otherwise use a named preset.
+function resolveTheme(params) {
+  const { theme } = params;
   const isCustom =
     (theme && theme.toLowerCase() === "custom") ||
     params.colors ||
@@ -243,18 +238,33 @@ async function generateGraph(params) {
     params.border ||
     params.accent;
   if (isCustom) {
-    setTheme(
-      buildCustomTheme({
-        colors: params.colors ? params.colors.split(",") : [],
-        bg: params.bg,
-        border: params.border,
-        accent: params.accent,
-        label: params.labelColor,
-      }),
-    );
-  } else if (theme && AVAILABLE_THEMES[theme.toLowerCase()]) {
-    setTheme(AVAILABLE_THEMES[theme.toLowerCase()]);
+    return buildCustomTheme({
+      colors: params.colors ? params.colors.split(",") : [],
+      bg: params.bg,
+      border: params.border,
+      accent: params.accent,
+      label: params.labelColor,
+    });
   }
+  const name = (theme || "").toLowerCase();
+  return Object.hasOwn(AVAILABLE_THEMES, name)
+    ? AVAILABLE_THEMES[name]
+    : GITHUB_THEME;
+}
+
+/**
+ * Generate isometric contribution graph
+ * @param {Object} params
+ * @returns {Promise<Buffer>} PNG or SVG bytes, per params.format
+ */
+async function generateGraph(params) {
+  const { username, year, width, height, stats, credit } = params;
+
+  // The theme goes to the renderer per request instead of through the
+  // renderer's module-level setTheme(): requests interleave at the await
+  // below, so a shared theme could be replaced by another request's before
+  // this one renders, and the wrong image would be cached for the day.
+  const theme = resolveTheme(params);
 
   // Determine if using 365-day mode
   const use365Days = year === "none";
@@ -276,6 +286,7 @@ async function generateGraph(params) {
     width,
     height,
     username: credit ? username : null,
+    theme,
   };
 
   if (params.format === "svg") {
@@ -424,7 +435,9 @@ async function handleRequest(req, res) {
           console.log(`[SAVE]  ${params.username} — cached to Supabase`),
         )
         .catch((err) =>
-          console.error(`[ERROR] ${params.username} — cache save failed:`, err),
+          console.error(
+            `[ERROR] ${params.username} — cache save failed: ${err?.message ?? err}`,
+          ),
         );
 
       // Send response

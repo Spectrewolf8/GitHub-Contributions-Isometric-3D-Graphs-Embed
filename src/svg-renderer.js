@@ -210,8 +210,7 @@ function renderCubes(layout) {
 /**
  * Render the stats boxes, mirroring renderWithStats() in renderer.js
  */
-function renderStats(text, stats, width, height, scale) {
-  const theme = getStyleConfig();
+function renderStats(text, theme, stats, width, height, scale) {
   const dims = theme.dimensions;
   const margin = 25 * scale;
 
@@ -298,18 +297,24 @@ function renderStats(text, stats, width, height, scale) {
  * @param {number} options.height - Image height (default: 600)
  * @param {boolean} options.stats - Include the stats overlay (default: false)
  * @param {string} options.username - Username to display as credit (optional)
+ * @param {Object} options.theme - Theme to render with (default: the theme set by setTheme)
  * @returns {string} SVG markup
  */
 export function renderSVG(days, options = {}) {
-  const { width = 1000, height = 600, stats = false, username = null } = options;
-  const theme = getStyleConfig();
+  const {
+    width = 1000,
+    height = 600,
+    stats = false,
+    username = null,
+    theme = getStyleConfig(),
+  } = options;
   const scale = Math.min(width / 1000, height / 600);
-  const layout = layoutChart(days, { width, height });
+  const layout = layoutChart(days, { width, height, theme });
   const cubes = renderCubes(layout);
   const text = createTextWriter();
   const summary = calculateStats(days);
 
-  let overlay = stats ? renderStats(text, summary, width, height, scale) : "";
+  let overlay = stats ? renderStats(text, theme, summary, width, height, scale) : "";
 
   // Username credit, bottom right at half opacity like drawUsernameCredit()
   if (username) {
