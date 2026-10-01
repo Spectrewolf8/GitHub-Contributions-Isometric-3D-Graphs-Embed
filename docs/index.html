@@ -453,6 +453,69 @@
       .tb-field input[type="text"].tb-hex-invalid {
         border-color: var(--status-error, #cf222e);
       }
+      /* Theme JSON: paste to fill the pickers, or copy to reuse a theme */
+      .tb-json {
+        margin-top: 16px;
+      }
+      /* The textarea's text is transparent; a layer behind it draws the same
+         text with each hex value on a swatch of its own color. Both share
+         every metric so the caret lines up with the drawn text. */
+      .tb-json-editor {
+        position: relative;
+      }
+      .tb-json textarea,
+      .tb-json-paint {
+        display: block;
+        width: 100%;
+        min-height: 260px;
+        margin: 0;
+        padding: 8px 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.5;
+        letter-spacing: 0;
+        tab-size: 2;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        overflow-y: auto;
+        scrollbar-gutter: stable;
+      }
+      .tb-json textarea {
+        position: relative;
+        background: transparent;
+        color: transparent;
+        caret-color: var(--text-primary);
+        resize: vertical;
+      }
+      .tb-json-paint {
+        position: absolute;
+        inset: 0;
+        overflow-y: hidden;
+        border-color: transparent;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        pointer-events: none;
+      }
+      .tb-json-swatch {
+        border-radius: 3px;
+        box-shadow: 0 0 0 1px var(--swatch);
+        background: var(--swatch);
+      }
+      .tb-json textarea.tb-json-invalid {
+        border-color: var(--status-error, #cf222e);
+      }
+      .tb-json-status {
+        min-height: 1.4em;
+        margin: 6px 0 0;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .tb-json-status.tb-json-error {
+        color: var(--status-error, #cf222e);
+      }
       .tb-actions {
         display: flex;
         gap: 8px;
@@ -1061,6 +1124,27 @@
               </div>
             </div>
           </div>
+          <div class="tb-json">
+            <label class="fb-label" for="tbJson">Theme JSON</label>
+            <div class="tb-json-editor">
+              <pre class="tb-json-paint" id="tbJsonPaint" aria-hidden="true"></pre>
+              <textarea
+                id="tbJson"
+                spellcheck="false"
+                aria-describedby="tbJsonStatus"
+                oninput="tbJsonInput()"
+                onblur="tbJsonBlur()"
+                onscroll="tbJsonPaintScroll()"
+              ></textarea>
+            </div>
+            <p class="tb-json-status" id="tbJsonStatus" aria-live="polite">
+              Paste a theme here to fill the pickers, or copy it to reuse your
+              theme. <code>colors</code> sets <code>level0</code> (no
+              contributions) to <code>level4</code> (most), or takes a list of 5
+              hex values; <code>bg</code>, <code>border</code> and
+              <code>accent</code> style the stats box.
+            </p>
+          </div>
         </div>
         </section>
 
@@ -1106,11 +1190,11 @@
           <p class="fb-hint">Leave Year blank for a rolling 365-day window.</p>
           <div class="fb-toggles">
             <label class="fb-check">
-              <input type="checkbox" id="builderStats" onchange="toggleBoxGroup()" />
+              <input type="checkbox" id="builderStats" onchange="toggleBoxGroup()" checked />
               Stats overlay
             </label>
             <label class="fb-check">
-              <input type="checkbox" id="builderCredit" /> Username credit
+              <input type="checkbox" id="builderCredit" checked /> Username credit
             </label>
           </div>
         </section>
@@ -1161,7 +1245,7 @@
               id="generatedUrl"
               class="fb-url"
               readonly
-              value="https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=<enter-username>"
+              value="https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=<enter-username>&stats=true&credit=true"
             />
             <button class="fb-btn" id="copyButton" onclick="copyUrl()">
               Copy
@@ -2654,6 +2738,7 @@
         const hex = document.getElementById(id + "Hex");
         hex.value = swatch.value;
         hex.classList.remove("tb-hex-invalid");
+        tbJsonRefresh();
         generateUrl();
       }
       // Hex text changed -> validate and, if valid, drive the swatch.
@@ -2670,11 +2755,158 @@
         if (/^[0-9a-fA-F]{6}$/.test(s)) {
           hex.classList.remove("tb-hex-invalid");
           swatch.value = "#" + s.toLowerCase();
+          tbJsonRefresh();
           generateUrl();
         } else {
           // keep what they're typing, flag it, and don't push a bad value
           hex.classList.add("tb-hex-invalid");
         }
+      }
+
+      // Theme JSON. Keys mirror the API: colors (an object with level0..level4,
+      // or a list of 5 hex values, low to high), plus optional bg, border, accent.
+      const TB_LEVEL_IDS = ["tb0", "tb1", "tb2", "tb3", "tb4"];
+      const TB_BOX_IDS = { bg: "tbBg", border: "tbBorder", accent: "tbAccent" };
+      const TB_JSON_HINT = document.getElementById("tbJsonStatus").innerHTML;
+
+      // "#abc", "abc", "#aabbcc" or "aabbcc" -> "#aabbcc"; anything else -> null
+      function tbNormalizeHex(value) {
+        if (typeof value !== "string") return null;
+        let v = value.trim().replace(/^#/, "");
+        if (/^[0-9a-fA-F]{3}$/.test(v)) {
+          v = v
+            .split("")
+            .map((c) => c + c)
+            .join("");
+        }
+        return /^[0-9a-fA-F]{6}$/.test(v) ? "#" + v.toLowerCase() : null;
+      }
+
+      function tbSetColor(id, hex) {
+        document.getElementById(id).value = hex;
+        const text = document.getElementById(id + "Hex");
+        text.value = hex;
+        text.classList.remove("tb-hex-invalid");
+      }
+
+      function tbCurrentTheme() {
+        const value = (id) => document.getElementById(id).value;
+        const colors = {};
+        TB_LEVEL_IDS.forEach((id, i) => (colors["level" + i] = value(id)));
+        const theme = { colors };
+        for (const [key, id] of Object.entries(TB_BOX_IDS)) theme[key] = value(id);
+        return theme;
+      }
+
+      function tbJsonStatus(message, isError) {
+        const status = document.getElementById("tbJsonStatus");
+        status.classList.toggle("tb-json-error", Boolean(isError));
+        if (message === null) status.innerHTML = TB_JSON_HINT;
+        else status.textContent = message;
+        document
+          .getElementById("tbJson")
+          .classList.toggle("tb-json-invalid", Boolean(isError));
+      }
+
+      // Pickers -> JSON. Skipped while someone is typing in the box so their
+      // text isn't replaced under them.
+      function tbJsonRefresh() {
+        const box = document.getElementById("tbJson");
+        if (document.activeElement === box && box.dataset.dirty) return;
+        box.value = JSON.stringify(tbCurrentTheme(), null, 2);
+        delete box.dataset.dirty;
+        tbJsonStatus(null, false);
+        tbJsonPaint();
+      }
+
+      // Redraw the layer behind the JSON box. Each quoted hex value is drawn
+      // on its own color, with black or white text for contrast.
+      function tbJsonPaint() {
+        const text = document.getElementById("tbJson").value;
+        const escaped = text
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        const html = escaped.replace(
+          /"(#?(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3}))"/g,
+          (match, value) => {
+            const hex = tbNormalizeHex(value);
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            const ink = 0.299 * r + 0.587 * g + 0.114 * b > 150 ? "#000" : "#fff";
+            // The quotes sit inside the swatch, which pads it without moving text
+            return `<span class="tb-json-swatch" style="--swatch:${hex};color:${ink}">"${value}"</span>`;
+          },
+        );
+        // A trailing newline needs a character after it to take up a line
+        const paint = document.getElementById("tbJsonPaint");
+        paint.innerHTML = html.endsWith("\n") ? html + " " : html;
+        tbJsonPaintScroll();
+      }
+
+      function tbJsonPaintScroll() {
+        const box = document.getElementById("tbJson");
+        const paint = document.getElementById("tbJsonPaint");
+        paint.scrollTop = box.scrollTop;
+      }
+
+      // Leaving the box tidies valid JSON; invalid text is kept to fix.
+      function tbJsonBlur() {
+        if (!document.getElementById("tbJson").classList.contains("tb-json-invalid")) {
+          tbJsonRefresh();
+        }
+      }
+
+      // JSON -> pickers. Applies only when the whole theme is valid.
+      function tbJsonInput() {
+        const box = document.getElementById("tbJson");
+        box.dataset.dirty = "1";
+        tbJsonPaint();
+        let theme;
+        try {
+          theme = JSON.parse(box.value);
+        } catch (err) {
+          return tbJsonStatus("Not valid JSON yet: " + err.message, true);
+        }
+        if (!theme || typeof theme !== "object" || Array.isArray(theme)) {
+          return tbJsonStatus('Expected an object, like {"colors": [...]}.', true);
+        }
+        let levels = theme.colors;
+        if (levels && !Array.isArray(levels) && typeof levels === "object") {
+          levels = [0, 1, 2, 3, 4].map((i) => levels["level" + i]);
+        }
+        if (!Array.isArray(levels) || levels.length !== 5) {
+          return tbJsonStatus(
+            '"colors" needs 5 hex values, low to high (level 0 to 4).',
+            true,
+          );
+        }
+        const ramp = levels.map(tbNormalizeHex);
+        const badLevel = ramp.indexOf(null);
+        if (badLevel !== -1) {
+          return tbJsonStatus(
+            "Level " + badLevel + " in \"colors\" is not a hex color: " +
+              JSON.stringify(levels[badLevel]),
+            true,
+          );
+        }
+        const boxColors = {};
+        for (const key of Object.keys(TB_BOX_IDS)) {
+          if (theme[key] === undefined) continue;
+          const hex = tbNormalizeHex(theme[key]);
+          if (!hex) {
+            return tbJsonStatus(
+              '"' + key + '" is not a hex color: ' + JSON.stringify(theme[key]),
+              true,
+            );
+          }
+          boxColors[key] = hex;
+        }
+        ramp.forEach((hex, i) => tbSetColor(TB_LEVEL_IDS[i], hex));
+        for (const [key, hex] of Object.entries(boxColors)) tbSetColor(TB_BOX_IDS[key], hex);
+        tbJsonStatus("Theme applied.", false);
+        generateUrl();
       }
 
       // Append the theme params. For a preset, just the name; for Custom, the
@@ -2701,6 +2933,7 @@
         }
       }
       toggleCustomPanel();
+      tbJsonRefresh();
 
       // Fetch the repo's GitHub star count and show it in the Source section.
       // Public, CORS-enabled endpoint; on any failure (offline, rate limit)
