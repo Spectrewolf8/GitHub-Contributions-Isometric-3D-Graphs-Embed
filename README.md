@@ -1,6 +1,6 @@
 # <img src="media/assets/icon-128.png" alt="logo" width="40" height="40" style="vertical-align: middle;"> Isometric 3D Contributions Graphs
 
-Generate beautiful 3D isometric visualizations of GitHub contribution graphs. Available as both a CLI tool and a fast, cached API server.
+Generate beautiful 3D isometric visualizations of GitHub contribution graphs, as PNG or SVG. Available as both a CLI tool and a fast, cached API server.
 
 ## Examples
 
@@ -92,6 +92,7 @@ Generate beautiful 3D isometric visualizations of GitHub contribution graphs. Av
 - 🖌️ **Custom Themes**: design your own colors via the API or the in-page theme builder
 - 📊 **Statistics Overlay**: Contributions, streaks, averages
 - 🖼️ **Customizable**: Dimensions, year selection, credits, themes
+- 📐 **PNG or SVG**: SVG (`format=svg`, recommended) stays sharp at any size and is smaller over the wire; PNG is the default
 - 🚀 **Minimal**: Lightweight with no framework overhead
 - 💾 **Smart Caching**: Efficient daily caching with instant updates
 - 📅 **365-Day Rolling Window**: Default view showing last 365 days of activity
@@ -174,6 +175,8 @@ Server runs on port 3000 (configurable via `PORT` environment variable).
 GET /api/graph
 ```
 
+Returns a PNG by default. Add `format=svg` for an SVG (recommended for embeds).
+
 ### Query Parameters
 
 | Parameter  | Type          | Required | Default           | Description                                                                     |
@@ -238,7 +241,7 @@ https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spe
 **Full Customization:**
 
 ```
-https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&year=2025&width=1200&height=700&stats=true&credit=true&theme=neon
+https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&year=2025&width=1200&height=700&stats=true&credit=true&theme=neon&format=svg
 ```
 
 > **Note:** Use `http://localhost:3000` for local testing.
@@ -254,7 +257,7 @@ https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spe
 The stats box can be styled too, but only when the overlay is on (`stats=true`): `bg` sets the box background, `border` the box border, and `accent` the title/value text. Anything you leave out is derived automatically (text color is chosen for legibility against `bg`):
 
 ```
-https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&theme=custom&colors=0d1117,3a1078,4e31aa,3795bd,aad7d9&bg=0d1117&border=aad7d9&accent=aad7d9&stats=true
+https://isometric-contributions-spectrewolf8.onrender.com/api/graph?username=spectrewolf8&theme=custom&colors=0d1117,3a1078,4e31aa,3795bd,aad7d9&bg=0d1117&border=aad7d9&accent=aad7d9&stats=true&format=svg
 ```
 
 The easiest way to build one is the **URL and Theme Builder** on the [live docs page](https://isometric-contributions-spectrewolf8.onrender.com/): pick <b>Custom</b> in the theme dropdown, choose your colors with the pickers (or paste hex values), and copy the generated URL.
@@ -271,7 +274,7 @@ The API implements intelligent daily caching:
 **Cache Response Headers:**
 
 ```
-Content-Type: image/png
+Content-Type: image/png | image/svg+xml; charset=utf-8
 Content-Length: <bytes>
 Cache-Control: no-store, no-cache, must-revalidate, max-age=0
 Pragma: no-cache
@@ -458,6 +461,7 @@ SVG is recommended for embeds: it stays sharp at any size. Leave out `format=svg
 | `npm run test:api`          | Test API endpoints                |
 | `npm run cleanup`           | Manually run cache cleanup        |
 | `npm run cleanup:scheduler` | Start automatic cleanup scheduler |
+| `node generate-all-themes.js` | Regenerate the example images in `media/examples` (SVG, plus a PNG for social previews) |
 
 ## Output
 
